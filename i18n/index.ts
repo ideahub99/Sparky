@@ -1,0 +1,43 @@
+import type { Language } from '../types';
+import { en } from './locales/en';
+import { es } from './locales/es';
+import { ar } from './locales/ar';
+import { bn } from './locales/bn';
+import { fr } from './locales/fr';
+import { hi } from './locales/hi';
+import { id } from './locales/id';
+import { pt } from './locales/pt';
+import { ru } from './locales/ru';
+import { zh } from './locales/zh';
+
+export const SUPPORTED_LANGUAGES: Language[] = [
+  { code: 'en', name: 'lang.en' },
+  { code: 'zh', name: 'lang.zh' },
+  { code: 'hi', name: 'lang.hi' },
+  { code: 'es', name: 'lang.es' },
+  { code: 'ar', name: 'lang.ar' },
+  { code: 'fr', name: 'lang.fr' },
+  { code: 'bn', name: 'lang.bn' },
+  { code: 'pt', name: 'lang.pt' },
+  { code: 'ru', name: 'lang.ru' },
+  { code: 'id', name: 'lang.id' },
+];
+
+type TranslationDict = { [key: string]: string };
+export const translations: { [key: string]: TranslationDict } = {
+  en,
+  es,
+  ar,
+  bn,
+  fr,
+  hi,
+  id,
+  pt,
+  ru,
+  zh
+};
+
+export const i18n = {
+  SUPPORTED_LANGUAGES,
+  translations
+}

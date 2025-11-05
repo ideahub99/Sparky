@@ -1,0 +1,7 @@
+{
+  "name": " Sparky",
+  "description": "Sparky: An AI-powered mobile app to transform your photos. Experiment with hairstyles, hair colors, age filters, and more. Get detailed facial analysis and explore different looks with a suite of advanced, user-friendly tools.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
