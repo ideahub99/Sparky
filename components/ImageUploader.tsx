@@ -1,81 +1,73 @@
-
-import React, { useCallback, useState } from 'react';
-import { UploadIcon } from './icons';
+// FIX: Implemented the missing ImageUploader component.
+import React, { useState, useRef } from 'react';
+import { useTranslation } from '../contexts';
+import { Button } from './ui/Elements';
+import { UploadIcon, CameraIcon } from './icons';
 
 interface ImageUploaderProps {
-  onImageUpload: (base64Image: string) => void;
+  onImageConfirm: (image: Blob) => void;
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
-  const [isDragging, setIsDragging] = useState(false);
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageConfirm }) => {
+  const { t } = useTranslation();
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
-    if (file && file.type.startsWith('image/')) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageBlob(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (typeof e.target?.result === 'string') {
-          onImageUpload(e.target.result);
-        }
+        setImageSrc(e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
+  const handleConfirm = () => {
+    if (imageBlob) {
+      onImageConfirm(imageBlob);
     }
   };
 
-  const handleClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files[0]) {
-        handleFile(target.files[0]);
-      }
-    };
-    input.click();
+  const handleReset = () => {
+    setImageSrc(null);
+    setImageBlob(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
+  
+  if (imageSrc) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+        <img src={imageSrc} alt="Preview" className="max-h-[60vh] max-w-full rounded-2xl object-contain shadow-lg" />
+        <div className="mt-8 w-full space-y-3">
+          <Button onClick={handleConfirm} className="w-full !py-4">{t('uploader.confirm_button')}</Button>
+          <button onClick={handleReset} className="w-full font-semibold py-3 text-accent hover:text-accent/80">{t('uploader.change_button')}</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      onClick={handleClick}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      className={`w-full h-full flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-        isDragging ? 'border-indigo-500 bg-gray-700' : 'border-gray-600 hover:border-indigo-500 hover:bg-gray-700/50'
-      }`}
-    >
-      <div className="text-center p-8">
-        <UploadIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <p className="mt-4 text-lg font-semibold">Upload an Image</p>
-        <p className="mt-1 text-sm text-gray-500">Drag and drop, or click to select a file</p>
-      </div>
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <h2 className="text-2xl font-bold mb-2">{t('uploader.title')}</h2>
+        <p className="text-muted-foreground mb-8 max-w-sm">{t('uploader.subtitle')}</p>
+        <div className="w-full space-y-4">
+            <Button onClick={() => fileInputRef.current?.click()} className="w-full !py-4 !bg-card !text-foreground border border-border hover:!bg-muted">
+                <UploadIcon className="w-5 h-5 me-2" />
+                {t('uploader.upload_gallery')}
+            </Button>
+            <Button onClick={() => cameraInputRef.current?.click()} className="w-full !py-4 !bg-card !text-foreground border border-border hover:!bg-muted">
+                 <CameraIcon className="w-5 h-5 me-2" />
+                {t('uploader.take_photo')}
+            </Button>
+        </div>
+        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+        <input type="file" accept="image/*" capture="user" ref={cameraInputRef} onChange={handleFileChange} className="hidden" />
     </div>
   );
 };

@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [creditUsage, setCreditUsage] = useState<CreditUsage[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
 
   const defaultLocale = 'en';
   const [locale, setLocale] = useState(defaultLocale);
@@ -190,13 +191,15 @@ const App: React.FC = () => {
                 hairstylesRes, 
                 generationsRes, 
                 notificationsRes, 
-                creditUsageRes
+                creditUsageRes,
+                plansRes
             ] = await Promise.all([
                 supabase.from('tools').select('*').eq('is_active', true).order('sort_order'),
                 supabase.from('hairstyles').select('*'),
                 supabase.from('generations').select('id, tool_id, image_url, created_at, tools(name_key)').order('created_at', { ascending: false }).limit(20),
                 supabase.from('notifications').select('*').order('created_at', { ascending: false }),
-                supabase.from('credit_usage').select('id, tool_id, credits_used, created_at, tools(name_key)').order('created_at', { ascending: false }).limit(200)
+                supabase.from('credit_usage').select('id, tool_id, credits_used, created_at, tools(name_key)').order('created_at', { ascending: false }).limit(200),
+                supabase.from('plans').select('*').order('id')
             ]);
             
             if (toolsRes.data) setTools(mapToolIcons(toolsRes.data));
@@ -204,6 +207,7 @@ const App: React.FC = () => {
             if (generationsRes.data) setGenerations(generationsRes.data.map((g: any) => ({...g, toolName: g.tools.name_key, imageUrl: g.image_url })) as Generation[]);
             if (notificationsRes.data) setNotifications(notificationsRes.data as Notification[]);
             if (creditUsageRes.data) setCreditUsage(creditUsageRes.data.map((c: any) => ({...c, toolName: c.tools.name_key, credits: c.credits_used, date: c.created_at.split('T')[0] })) as CreditUsage[]);
+            if (plansRes.data) setPlans(plansRes.data as Plan[]);
             
             setDataLoading(false);
         };
@@ -310,7 +314,7 @@ const App: React.FC = () => {
       case 'settings':
         return <SettingsPage onNavigate={navigate} goBack={goBack} />;
       case 'subscription':
-        return <SubscriptionPage goBack={goBack} onNavigate={navigate} />;
+        return <SubscriptionPage goBack={goBack} onNavigate={navigate} user={user} plans={plans} />;
       case 'themes':
         return <ThemesPage goBack={goBack} />;
       case 'about':

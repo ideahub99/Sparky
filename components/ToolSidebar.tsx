@@ -1,6 +1,5 @@
-
 import React from 'react';
-import type { Tool, ToolParameters } from '../types';
+import type { Tool, ToolParameters, Hairstyle } from '../types';
 import { Button } from './ui/Elements';
 import { ToolControls } from './ToolControls';
 
@@ -13,6 +12,7 @@ interface ToolSidebarProps {
   onGenerate: () => void;
   isLoading: boolean;
   isDisabled: boolean;
+  hairstyles: Hairstyle[];
 }
 
 export const ToolSidebar: React.FC<ToolSidebarProps> = ({
@@ -24,6 +24,7 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
   onGenerate,
   isLoading,
   isDisabled,
+  hairstyles,
 }) => {
   return (
     <aside className="w-full md:w-96 bg-gray-800 rounded-lg p-6 flex flex-col gap-6 self-start">
@@ -50,7 +51,8 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
       
       <div className="border-t border-gray-700 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-indigo-300">{activeTool.name} Controls</h3>
-        <ToolControls activeTool={activeTool} params={params} setParams={setParams} />
+        {/* FIX: Pass hairstyles to ToolControls */}
+        <ToolControls activeTool={activeTool} params={params} setParams={setParams} hairstyles={hairstyles} />
       </div>
 
       <div className="mt-auto pt-6 border-t border-gray-700">
