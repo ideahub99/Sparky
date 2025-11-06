@@ -112,6 +112,14 @@ export const fr = {
     "tracking.title": "Utilisation des crédits",
     "tracking.total_used": "Total des crédits utilisés (30 derniers jours)",
     "tracking.credits_used": "{count} crédits utilisés",
+    "tracking.monthly_usage": "Utilisation Mensuelle",
+    "tracking.credits_left": "Crédits Restants",
+    "tracking.daily_limit": "Limite Quotidienne",
+    "tracking.usage_breakdown": "Répartition de l'Utilisation",
+    "tracking.details_title": "Détails d'Utilisation",
+    "tracking.last_30_days": "30 derniers jours",
+    "tracking.avg_daily_use": "Utilisation Quotidienne Moy.",
+    "tracking.recent_activity": "Activité Récente",
 
     "account.title": "Informations du compte",
     "account.profile_section": "Détails du profil",
@@ -122,6 +130,8 @@ export const fr = {
     "account.update_success": "Profil mis à jour avec succès !",
     "account.password_success": "Mot de passe mis à jour avec succès !",
     "account.error_password_empty": "Le mot de passe ne peut pas être vide.",
+    "account.password_change_description": "Pour votre sécurité, nous enverrons un code de vérification à votre adresse e-mail pour changer votre mot de passe.",
+    "account.send_code_button": "Envoyer le code de vérification",
     
     "notifications.title": "Notifications",
     "notifications.empty_title": "Aucune notification",

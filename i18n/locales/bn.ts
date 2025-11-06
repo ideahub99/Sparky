@@ -112,6 +112,14 @@ export const bn = {
     "tracking.title": "ক্রেডিট ব্যবহার",
     "tracking.total_used": "মোট ব্যবহৃত ক্রেডিট (শেষ ৩০ দিন)",
     "tracking.credits_used": "{count} ক্রেডিট ব্যবহৃত হয়েছে",
+    "tracking.monthly_usage": "মাসিক ব্যবহার",
+    "tracking.credits_left": "ক্রেডিট বাকি আছে",
+    "tracking.daily_limit": "দৈনিক সীমা",
+    "tracking.usage_breakdown": "ব্যবহারের বিবরণ",
+    "tracking.details_title": "ব্যবহারের বিবরণ",
+    "tracking.last_30_days": "শেষ ৩০ দিন",
+    "tracking.avg_daily_use": "গড় দৈনিক ব্যবহার",
+    "tracking.recent_activity": "সাম্প্রতিক কার্যকলাপ",
 
     "account.title": "অ্যাকাউন্টের তথ্য",
     "account.profile_section": "প্রোফাইলের বিবরণ",
@@ -122,6 +130,8 @@ export const bn = {
     "account.update_success": "প্রোফাইল সফলভাবে আপডেট করা হয়েছে!",
     "account.password_success": "পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে!",
     "account.error_password_empty": "পাসওয়ার্ড খালি রাখা যাবে না।",
+    "account.password_change_description": "আপনার সুরক্ষার জন্য, আমরা আপনার পাসওয়ার্ড পরিবর্তন করতে আপনার ইমেলে একটি যাচাইকরণ কোড পাঠাব।",
+    "account.send_code_button": "যাচাইকরণ কোড পাঠান",
     
     "notifications.title": "বিজ্ঞপ্তি",
     "notifications.empty_title": "কোনো বিজ্ঞপ্তি নেই",

@@ -1,4 +1,3 @@
-// FIX: Use named import for ComponentType to avoid issues with default type imports.
 import type { ComponentType, CSSProperties } from 'react';
 
 export interface Plan {
@@ -27,7 +26,6 @@ export interface Notification {
 export interface User {
   id: string;
   username: string;
-  // FIX: Add email property to User type to align with usage in the app.
   email: string;
   plan: Plan;
   credits: number;
@@ -41,7 +39,6 @@ export interface Tool {
   name: string; // This will now be a translation key, e.g., "tool.hairstyle.name"
   description: string; // This will now be a translation key
   type: ToolType;
-  // FIX: Allow style prop on tool icons to fix type error in TrackingPage
   icon: ComponentType<{ className?: string; style?: CSSProperties }>;
   coverImage?: string; // For home page
 }
@@ -91,7 +88,8 @@ export interface FacialAnalysisResult {
 export type Page = 
   | 'welcome' | 'login' | 'signup' | 'home' | 'tools' | 'history' | 'profile' 
   | 'settings' | 'subscription' | 'themes' | 'about' | 'privacy' | 'terms'
-  | 'editor' | 'language' | 'tracking' | 'account-info' | 'notifications' | 'notification-settings';
+  | 'editor' | 'language' | 'tracking' | 'account-info' | 'notifications' | 'notification-settings'
+  | 'forgot-password' | 'update-password' | 'usage-detail';
 
 export interface Generation {
   id: number;
@@ -111,4 +109,5 @@ export interface CreditUsage {
 export type Language = {
     code: string;
     name: string;
+    nativeName: string;
 }

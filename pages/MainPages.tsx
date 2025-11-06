@@ -264,7 +264,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, notifications, o
                 </div>
                 
                 <div className="pt-4">
-                    <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center justify-center gap-2 text-destructive font-semibold p-3 bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">
+                    <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center justify-center gap-2 text-destructive font-semibold p-3 rounded-lg hover:bg-destructive/10 transition-colors">
                         <ArrowRightOnRectangleIcon className="w-5 h-5"/>
                         <span>{t('profile.logout')}</span>
                     </button>

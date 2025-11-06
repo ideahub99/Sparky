@@ -112,6 +112,14 @@ export const id = {
     "tracking.title": "Penggunaan Kredit",
     "tracking.total_used": "Total Kredit Digunakan (30 Hari Terakhir)",
     "tracking.credits_used": "{count} kredit digunakan",
+    "tracking.monthly_usage": "Penggunaan Bulanan",
+    "tracking.credits_left": "Kredit Tersisa",
+    "tracking.daily_limit": "Batas Harian",
+    "tracking.usage_breakdown": "Rincian Penggunaan",
+    "tracking.details_title": "Detail Penggunaan",
+    "tracking.last_30_days": "30 Hari Terakhir",
+    "tracking.avg_daily_use": "Penggunaan Harian Rata-rata",
+    "tracking.recent_activity": "Aktivitas Terbaru",
 
     "account.title": "Informasi Akun",
     "account.profile_section": "Detail Profil",
@@ -122,6 +130,8 @@ export const id = {
     "account.update_success": "Profil berhasil diperbarui!",
     "account.password_success": "Kata sandi berhasil diperbarui!",
     "account.error_password_empty": "Kata sandi tidak boleh kosong.",
+    "account.password_change_description": "Untuk keamanan Anda, kami akan mengirimkan kode verifikasi ke email Anda untuk mengubah kata sandi Anda.",
+    "account.send_code_button": "Kirim Kode Verifikasi",
     
     "notifications.title": "Notifikasi",
     "notifications.empty_title": "Tidak Ada Notifikasi",

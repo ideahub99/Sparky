@@ -112,6 +112,14 @@ export const ru = {
     "tracking.title": "Использование кредитов",
     "tracking.total_used": "Всего использовано кредитов (за последние 30 дней)",
     "tracking.credits_used": "{count} кредитов использовано",
+    "tracking.monthly_usage": "Ежемесячное использование",
+    "tracking.credits_left": "Осталось кредитов",
+    "tracking.daily_limit": "Дневной лимит",
+    "tracking.usage_breakdown": "Анализ использования",
+    "tracking.details_title": "Детали использования",
+    "tracking.last_30_days": "Последние 30 дней",
+    "tracking.avg_daily_use": "Среднее дневное использование",
+    "tracking.recent_activity": "Недавняя активность",
 
     "account.title": "Информация об аккаунте",
     "account.profile_section": "Детали профиля",
@@ -122,6 +130,8 @@ export const ru = {
     "account.update_success": "Профиль успешно обновлен!",
     "account.password_success": "Пароль успешно обновлен!",
     "account.error_password_empty": "Пароль не может быть пустым.",
+    "account.password_change_description": "В целях вашей безопасности мы отправим код подтверждения на вашу электронную почту для смены пароля.",
+    "account.send_code_button": "Отправить код подтверждения",
     
     "notifications.title": "Уведомления",
     "notifications.empty_title": "Нет уведомлений",

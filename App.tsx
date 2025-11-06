@@ -1,15 +1,12 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
-// FIX: Added missing type imports for Page, Tool, and Hairstyle.
 import type { User, Plan, Page, Generation, CreditUsage, Notification, NotificationPreferences, Tool, Hairstyle } from './types';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { BottomNav } from './components/ui/Elements';
 import { LocaleContext, ThemeContext, ACCENT_COLORS } from './contexts';
 import type { Theme, AccentColor } from './contexts';
 
-import { WelcomeScreen, LoginScreen, SignUpScreen } from './pages/AuthPages';
+import { WelcomeScreen, LoginScreen, SignUpScreen, ForgotPasswordScreen, UpdatePasswordScreen } from './pages/AuthPages';
 import { HomePage, ToolsPage, HistoryPage, ProfilePage } from './pages/MainPages';
-// FIX: Corrected import for EditorPage which was previously causing a module resolution error.
 import { EditorPage } from './pages/EditorPage';
 import { 
     SettingsPage, 
@@ -20,6 +17,7 @@ import {
     TermsAndConditionsPage, 
     LanguagePage,
     TrackingPage,
+    UsageDetailPage,
     AccountInfoPage,
     NotificationsPage,
     NotificationSettingsPage
@@ -49,6 +47,7 @@ const App: React.FC = () => {
   
   const [user, setUser] = useState<User | null>(null);
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
+  const [selectedUsageTool, setSelectedUsageTool] = useState<Tool | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
   
@@ -114,8 +113,10 @@ const App: React.FC = () => {
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        // Only refetch profile if the user ID changes or user logs out.
-        // This prevents re-fetching on token refreshes.
+        if (_event === 'PASSWORD_RECOVERY') {
+            navigate('update-password');
+        }
+        
         if (session?.user?.id !== user?.id || !session) {
              handleAuthChange(session);
         }
@@ -127,10 +128,12 @@ const App: React.FC = () => {
   // Navigation Effect - Reacts to user state changes
   useEffect(() => {
     if (!authLoading) {
-      const isUserOnAuthPage = ['welcome', 'login', 'signup'].includes(page);
+      const authPages: Page[] = ['welcome', 'login', 'signup', 'forgot-password', 'update-password'];
+      const isUserOnAuthPage = authPages.includes(page);
+      
       const isUserOnAppPage = !isUserOnAuthPage;
 
-      if (user && isUserOnAuthPage) {
+      if (user && isUserOnAuthPage && page !== 'update-password') {
         navigate('home', true);
       } else if (!user && isUserOnAppPage) {
         navigate('welcome', true);
@@ -180,7 +183,6 @@ const App: React.FC = () => {
             setDataLoading(true);
             
             const mapToolIcons = (dbTools: any[]) => {
-                // FIX: Update icon map type to allow style prop, resolving type error in TrackingPage
                 const iconMap: { [key: string]: React.ComponentType<{ className?: string; style?: React.CSSProperties }> } = {
                     SparklesIcon, FaceSmileIcon, PaintBrushIcon, ClockIcon, UserSearchIcon, HappyFaceIcon, SadFaceIcon, WindIcon, BeardIcon, SkinIcon, PumpkinIcon, EyeIcon
                 };
@@ -273,7 +275,7 @@ const App: React.FC = () => {
       setNavigationStack([...navigationStack]);
       setPage(lastPage);
     } else {
-      if (['editor', 'settings', 'subscription', 'themes', 'about', 'privacy', 'terms', 'language', 'tracking', 'account-info', 'notifications', 'notification-settings'].includes(page)) {
+      if (['editor', 'settings', 'subscription', 'themes', 'about', 'privacy', 'terms', 'language', 'tracking', 'usage-detail', 'account-info', 'notifications', 'notification-settings'].includes(page)) {
         navigate('home');
       }
     }
@@ -284,8 +286,12 @@ const App: React.FC = () => {
     navigate('editor');
   };
 
+  const selectUsageTool = (tool: Tool) => {
+    setSelectedUsageTool(tool);
+    navigate('usage-detail');
+  }
+
   const renderPage = () => {
-    // FIX: The page loader should not display on the editor page, as it causes the component to unmount and lose state.
     const showPageLoader = (authLoading || (user && dataLoading)) && page !== 'editor';
     if (showPageLoader) {
         return (
@@ -301,6 +307,8 @@ const App: React.FC = () => {
           return <LoginScreen onNavigate={navigate} />;
         case 'signup':
           return <SignUpScreen onNavigate={navigate} />;
+        case 'forgot-password':
+          return <ForgotPasswordScreen onNavigate={navigate} />;
         case 'welcome':
         default:
           return <WelcomeScreen onNavigate={navigate} />;
@@ -329,7 +337,9 @@ const App: React.FC = () => {
       case 'language':
           return <LanguagePage goBack={goBack} />;
       case 'tracking':
-          return <TrackingPage goBack={goBack} creditUsage={creditUsage} allTools={tools}/>;
+          return <TrackingPage goBack={goBack} creditUsage={creditUsage} allTools={tools} user={user} onSelectTool={selectUsageTool}/>;
+      case 'usage-detail':
+          return selectedUsageTool ? <UsageDetailPage goBack={goBack} creditUsage={creditUsage} tool={selectedUsageTool} recentGenerations={generations}/> : <TrackingPage goBack={goBack} creditUsage={creditUsage} allTools={tools} user={user} onSelectTool={selectUsageTool} />;
       case 'account-info':
         return <AccountInfoPage user={user} goBack={goBack} onUserUpdate={() => refreshData(user.id)} />;
       case 'notifications':
@@ -346,6 +356,8 @@ const App: React.FC = () => {
         return <NotificationSettingsPage preferences={user.notificationPreferences} onPreferencesChange={handlePreferencesChange} goBack={goBack} />;
       case 'editor':
         return activeTool ? <EditorPage activeTool={activeTool} goBack={goBack} user={user} onNavigate={navigate} onDataRefresh={() => refreshData(user.id)} hairstyles={hairstyles}/> : <ToolsPage tools={tools} selectTool={selectTool} onNavigate={navigate} />;
+      case 'update-password':
+        return <UpdatePasswordScreen onNavigate={navigate} />;
       case 'home':
       default:
         return <HomePage tools={tools} recentGenerations={generations} selectTool={selectTool} user={user} onNavigate={navigate} />;
@@ -358,7 +370,7 @@ const App: React.FC = () => {
     <LocaleContext.Provider value={{ locale, setLocale, t }}>
       <ThemeContext.Provider value={{ theme, setTheme, accentColor, setAccentColor }}>
         <div className="max-w-md mx-auto min-h-[100dvh] bg-background flex flex-col font-sans">
-        <div className={`flex-grow ${showBottomNav ? 'pb-24' : ''}`}> 
+        <div className={`flex-grow overflow-y-auto scrollbar-hide ${showBottomNav ? 'pb-24' : ''}`}> 
             {isSupabaseConfigured ? renderPage() : <SupabaseConfigError />}
         </div>
         {isSupabaseConfigured && showBottomNav && <BottomNav activePage={page} setPage={(p: Page) => navigate(p, true)} />}

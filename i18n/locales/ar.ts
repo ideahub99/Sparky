@@ -112,6 +112,14 @@ export const ar = {
     "tracking.title": "استخدام الرصيد",
     "tracking.total_used": "إجمالي الرصيد المستخدم (آخر 30 يومًا)",
     "tracking.credits_used": "{count} رصيد مستخدم",
+    "tracking.monthly_usage": "الاستخدام الشهري",
+    "tracking.credits_left": "الرصيد المتبقي",
+    "tracking.daily_limit": "الحد اليومي",
+    "tracking.usage_breakdown": "تفاصيل الاستخدام",
+    "tracking.details_title": "تفاصيل الاستخدام",
+    "tracking.last_30_days": "آخر 30 يومًا",
+    "tracking.avg_daily_use": "متوسط الاستخدام اليومي",
+    "tracking.recent_activity": "النشاط الأخير",
 
     "account.title": "معلومات الحساب",
     "account.profile_section": "تفاصيل الملف الشخصي",
@@ -122,6 +130,8 @@ export const ar = {
     "account.update_success": "تم تحديث الملف الشخصي بنجاح!",
     "account.password_success": "تم تحديث كلمة المرور بنجاح!",
     "account.error_password_empty": "لا يمكن أن تكون كلمة المرور فارغة.",
+    "account.password_change_description": "لأمانك، سنرسل رمز تحقق إلى بريدك الإلكتروني لتغيير كلمة المرور الخاصة بك.",
+    "account.send_code_button": "إرسال رمز التحقق",
     
     "notifications.title": "الإشعارات",
     "notifications.empty_title": "لا توجد إشعارات",

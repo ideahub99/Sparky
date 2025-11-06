@@ -112,6 +112,14 @@ export const hi = {
     "tracking.title": "क्रेडिट उपयोग",
     "tracking.total_used": "कुल क्रेडिट का उपयोग (पिछले 30 दिन)",
     "tracking.credits_used": "{count} क्रेडिट का उपयोग किया गया",
+    "tracking.monthly_usage": "मासिक उपयोग",
+    "tracking.credits_left": "शेष क्रेडिट",
+    "tracking.daily_limit": "दैनिक सीमा",
+    "tracking.usage_breakdown": "उपयोग का विवरण",
+    "tracking.details_title": "उपयोग का विवरण",
+    "tracking.last_30_days": "पिछले 30 दिन",
+    "tracking.avg_daily_use": "औसत दैनिक उपयोग",
+    "tracking.recent_activity": "हाल की गतिविधि",
 
     "account.title": "खाता जानकारी",
     "account.profile_section": "प्रोफ़ाइल विवरण",
@@ -122,6 +130,8 @@ export const hi = {
     "account.update_success": "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!",
     "account.password_success": "पासवर्ड सफलतापूर्वक अपडेट किया गया!",
     "account.error_password_empty": "पासवर्ड खाली नहीं हो सकता।",
+    "account.password_change_description": "आपकी सुरक्षा के लिए, हम आपका पासवर्ड बदलने के लिए आपके ईमेल पर एक सत्यापन कोड भेजेंगे।",
+    "account.send_code_button": "सत्यापन कोड भेजें",
     
     "notifications.title": "सूचनाएं",
     "notifications.empty_title": "कोई सूचना नहीं",

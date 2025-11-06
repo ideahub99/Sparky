@@ -1,128 +1,74 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from '../contexts';
 import type { Page } from '../types';
 import { Button, PageHeader } from '../components/ui/Elements';
 import { supabase } from '../lib/supabaseClient';
-import { LogoIcon, SparklesIcon, UserSearchIcon, ClockIcon, PaintBrushIcon } from '../components/icons';
+import { LogoIcon, SparklesIcon, UserSearchIcon, ClockIcon, PaintBrushIcon, FaceSmileIcon, EyeIcon, EnvelopeIcon, UserPlusIcon, MessageCodeIcon, KeyIcon } from '../components/icons';
 
-// FIX: Added WelcomeScreen component which was missing.
 export const WelcomeScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) => {
     const { t } = useTranslation();
-    const [typedTitle, setTypedTitle] = useState('');
-    const [showTitleCursor, setShowTitleCursor] = useState(true);
-    const title = t("welcome.title");
-
-    const phrases = useMemo(() => [
-        t('welcome.phrase1'),
-        t('welcome.phrase2'),
-        t('welcome.phrase3'),
-    ], [t]);
-
-    const [phraseIndex, setPhraseIndex] = useState(0);
-    const [currentPhrase, setCurrentPhrase] = useState('');
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [typingSpeed, setTypingSpeed] = useState(150);
-
-    useEffect(() => {
-        // Ensure state is reset if component re-renders without unmounting (e.g., hot reload)
-        setTypedTitle('');
-        setShowTitleCursor(true);
-        
-        let i = 0;
-        const typingInterval = setInterval(() => {
-            if (i < title.length) {
-                setTypedTitle(prev => prev + title.charAt(i));
-                i++;
-            } else {
-                clearInterval(typingInterval);
-                // Hide cursor after typing is complete
-                setTimeout(() => setShowTitleCursor(false), 700);
-            }
-        }, 150);
-
-        return () => {
-            clearInterval(typingInterval);
-        };
-    }, [title]);
     
-    // Effect for subtitle typing animation
-    useEffect(() => {
-        if (typedTitle.length !== title.length) return; // Wait for title animation to finish
-
-        const handleTyping = () => {
-            const fullPhrase = phrases[phraseIndex];
-            if (isDeleting) {
-                setCurrentPhrase(fullPhrase.substring(0, currentPhrase.length - 1));
-                setTypingSpeed(75);
-            } else {
-                setCurrentPhrase(fullPhrase.substring(0, currentPhrase.length + 1));
-                setTypingSpeed(150);
-            }
-
-            if (!isDeleting && currentPhrase === fullPhrase) {
-                setTimeout(() => setIsDeleting(true), 1500); // Pause at end of phrase
-            } else if (isDeleting && currentPhrase === '') {
-                setIsDeleting(false);
-                setPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
-            }
-        };
-
-        const typingTimeout = setTimeout(handleTyping, typingSpeed);
-        return () => clearTimeout(typingTimeout);
-    }, [currentPhrase, isDeleting, phraseIndex, phrases, typedTitle.length, title.length, typingSpeed]);
-
-    const animationsReady = typedTitle.length === title.length;
-    
-    const buttonDelay = (title.length * 150 + 500) / 1000;
-    
-    const features = useMemo(() => [
-        { icon: SparklesIcon, text: t('welcome.feature1'), delay: buttonDelay + 0.3 },
-        { icon: UserSearchIcon, text: t('welcome.feature2'), delay: buttonDelay + 0.4 },
-        { icon: ClockIcon, text: t('welcome.feature3'), delay: buttonDelay + 0.5 },
-        { icon: PaintBrushIcon, text: t('welcome.feature4'), delay: buttonDelay + 0.6 }
-    ], [t, buttonDelay]);
+    const orbitalIcons = useMemo(() => [
+        { icon: SparklesIcon, color: '#ec4899', size: 50, distance: 0.25, angle: 20 },
+        { icon: UserSearchIcon, color: '#f59e0b', size: 44, distance: 0.4, angle: 80 },
+        { icon: ClockIcon, color: '#8b5cf6', size: 60, distance: 0.35, angle: 150 },
+        { icon: PaintBrushIcon, color: '#10b981', size: 48, distance: 0.45, angle: 220 },
+        { icon: FaceSmileIcon, color: '#3b82f6', size: 52, distance: 0.3, angle: 280 },
+        { icon: EyeIcon, color: '#ef4444', size: 40, distance: 0.4, angle: 340 },
+    ], []);
 
     return (
-        <div className="min-h-full flex flex-col justify-center items-center py-8 px-4 text-center text-foreground relative overflow-hidden animated-gradient-background">
-            <div className="relative z-10 w-full max-w-xs sm:max-w-sm">
-                 <h1 className="text-5xl font-bold mb-4 text-accent min-h-[60px] flex items-center justify-center gap-2">
-                    {animationsReady && <LogoIcon className="w-12 h-12 animate-flame" />}
-                    <span>{typedTitle}</span>
-                    {showTitleCursor && <span className="inline-block w-1.5 h-12 bg-accent blinking-cursor ml-2"></span>}
-                </h1>
+        <div className="min-h-full flex flex-col justify-between items-center p-6 text-center text-foreground dark-gradient-background overflow-hidden">
+            <div className="w-full flex justify-center items-center flex-grow relative -mt-10">
+                <div className="orbit-container">
+                    {/* Concentric circle paths */}
+                    <div className="orbit-path" style={{ width: '60%', height: '60%' }}></div>
+                    <div className="orbit-path" style={{ width: '85%', height: '85%' }}></div>
+                    
+                    {/* Central Star */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                         <SparklesIcon className="w-12 h-12 text-orange-400 opacity-80" style={{ filter: 'drop-shadow(0 0 10px #fb923c)'}} />
+                    </div>
+
+                    {/* Orbiting Icons */}
+                    <div className="w-full h-full animate-orbit-rotate">
+                        {orbitalIcons.map((item, index) => {
+                            const radius = 50 * (1 - item.distance); // in %
+                            const x = 50 + radius * Math.cos(item.angle * Math.PI / 180);
+                            const y = 50 + radius * Math.sin(item.angle * Math.PI / 180);
+                            return (
+                                <div key={index} className="orbit-icon" style={{ left: `${x}%`, top: `${y}%`}}>
+                                    <div 
+                                        className="w-12 h-12 rounded-full flex items-center justify-center animate-icon-float"
+                                        style={{ 
+                                            backgroundColor: item.color,
+                                            boxShadow: `0 4px 20px ${item.color}40`,
+                                            animationDelay: `${index * 0.3}s`
+                                        }}
+                                    >
+                                        <item.icon className="w-7 h-7 text-white" />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            <div className="w-full max-w-sm flex flex-col items-center z-10">
+                <div className="flex items-center gap-2 mb-3">
+                    <LogoIcon className="w-7 h-7 text-accent" />
+                    <span className="text-2xl font-bold tracking-tight text-gray-200">{t("welcome.title")}</span>
+                </div>
+                <h1 className="text-5xl font-extrabold tracking-tighter text-white mb-2">Transform Your Photos</h1>
+                <h2 className="text-4xl font-bold tracking-tight gradient-text mb-8">Start Here</h2>
                 
-                <p className="text-muted-foreground mb-12 max-w-sm mx-auto min-h-[48px] text-lg">
-                    {animationsReady && (
-                        <>
-                            <span>{currentPhrase}</span>
-                            <span className="inline-block w-0.5 h-6 bg-muted-foreground blinking-cursor ml-1"></span>
-                        </>
-                    )}
-                </p>
-
-                <div 
-                  className="w-full space-y-3 animate-fade-in-up" 
-                  style={animationsReady ? { animationDelay: `${buttonDelay}s`, animationFillMode: 'backwards' } : { opacity: 0 }}
+                <Button
+                    onClick={() => onNavigate('signup')}
+                    className="w-full !py-4 text-lg transition-transform hover:scale-105"
                 >
-                    <Button className="w-full !py-4" onClick={() => onNavigate('signup')}>{t('welcome.create_account')}</Button>
-                    <button className="w-full font-semibold py-3 text-accent hover:text-accent/80" onClick={() => onNavigate('login')}>{t('welcome.log_in')}</button>
-                </div>
-
-                <div className="mt-16 grid grid-cols-2 gap-4 w-full">
-                    {features.map((feature, index) => (
-                        <div 
-                            key={index}
-                            className="bg-card/20 backdrop-blur-sm p-4 rounded-xl border border-white/10 text-center flex flex-col items-center justify-center aspect-square animate-card-entry transition-all duration-300 hover:scale-105 hover:bg-card/40 hover:border-white/20"
-                            style={animationsReady ? { animationDelay: `${feature.delay}s`, animationFillMode: 'backwards' } : { opacity: 0 }}
-                        >
-                            <feature.icon className="w-7 h-7 mb-3 text-accent" />
-                            <span className="text-sm font-medium text-foreground/80 leading-tight">{feature.text}</span>
-                        </div>
-                    ))}
-                </div>
-
+                    Get Started
+                </Button>
             </div>
         </div>
     );
@@ -135,13 +81,11 @@ export const LoginScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ on
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [message, setMessage] = useState<string | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-        setMessage(null);
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
         if (authError) {
@@ -151,76 +95,63 @@ export const LoginScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ on
         }
 
         if (authData.user) {
-            // After successful authentication, we must verify that a corresponding user profile exists in our public `users` table.
-            // This prevents users from getting stuck in a logged-in state without a profile, which can happen if the
-            // post-signup trigger fails or if a user was created before the trigger existed.
             const { error: profileError } = await supabase
                 .from('users')
                 .select('id')
                 .eq('id', authData.user.id)
-                .single(); // .single() is crucial here; it errors if no row (or more than one) is found.
+                .single(); 
 
             if (profileError) {
-                // If the profile doesn't exist, we inform the user and log them out to clear the invalid session.
                 setError("Login failed: User profile not found. Please contact support.");
                 await supabase.auth.signOut();
                 setLoading(false);
             }
-            // If the profile exists, we do nothing here. The global onAuthStateChange listener in App.tsx
-            // will detect the new session, fetch the full user profile, update the global state, and trigger navigation.
-            // We intentionally don't set loading to false, so the user sees a spinner until they are navigated away.
         } else {
-            // This case handles unexpected scenarios where login succeeds without returning a user object.
             setError("An unexpected error occurred. Please try again.");
             setLoading(false);
         }
     };
 
-    const handlePasswordReset = async () => {
-        if (!email) {
-            setError("Please enter your email address to reset your password.");
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        setMessage(null);
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin, // URL to redirect to after password reset
-        });
-        if (error) {
-            setError(error.message);
-        } else {
-            setMessage("Password reset link sent! Please check your email.");
-        }
-        setLoading(false);
-    };
-
     return (
-    <div className="h-full flex flex-col justify-center p-8 text-foreground">
-        <PageHeader title="" showBack={true} onBack={() => onNavigate('welcome')} />
-        <div className="text-center mb-10">
-            {/* ... (icon and title) ... */}
-        </div>
-        <form className="space-y-4" onSubmit={handleLogin}>
-            <div>
-                <label className="text-sm font-medium text-muted-foreground">{t('login.email_label')}</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
-            </div>
-            <div>
-                 <div className="flex justify-between items-baseline">
-                    <label className="text-sm font-medium text-muted-foreground">{t('login.password_label')}</label>
-                    <button type="button" onClick={handlePasswordReset} className="text-xs font-semibold text-accent hover:text-accent/80">Forgot Password?</button>
+        <div className="min-h-full flex flex-col p-4">
+            <PageHeader title="" showBack={true} onBack={() => onNavigate('welcome')} />
+            <div className="flex-grow flex flex-col justify-center items-center text-center px-4">
+                <div className="bg-card border border-border p-4 rounded-full mb-6">
+                    <EnvelopeIcon className="w-8 h-8 text-accent" />
                 </div>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
+                <h2 className="text-3xl font-bold mb-2">{t('login.title')}</h2>
+                <p className="text-muted-foreground mb-8">{t('login.subtitle')}</p>
+                
+                <form className="w-full max-w-sm space-y-4" onSubmit={handleLogin}>
+                    <input 
+                        type="email" 
+                        value={email} 
+                        onChange={e => setEmail(e.target.value)} 
+                        className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" 
+                        placeholder={t('login.email_label')}
+                        required 
+                    />
+                     <input 
+                        type="password" 
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                        className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" 
+                        placeholder={t('login.password_label')}
+                        required 
+                    />
+                    <div className="text-right">
+                         <button type="button" onClick={() => onNavigate('forgot-password')} className="text-sm font-semibold text-accent hover:text-accent/80">Forgot Password?</button>
+                    </div>
+
+                    {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
+                    
+                    <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>{t('login.submit_button')}</Button>
+                </form>
+                <p className="text-center text-muted-foreground mt-8">
+                    {t('login.signup_prompt')} <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('signup'); }} className="font-semibold text-accent hover:text-accent/80">{t('login.signup_link')}</a>
+                </p>
             </div>
-            {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
-            {message && <p className="text-green-500 text-sm text-center pt-2">{message}</p>}
-            <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>{t('login.submit_button')}</Button>
-        </form>
-        <p className="text-center text-muted-foreground mt-8">
-            {t('login.signup_prompt')} <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('signup'); }} className="font-semibold text-accent hover:text-accent/80">{t('login.signup_link')}</a>
-        </p>
-    </div>
+        </div>
     );
 };
 
@@ -237,21 +168,41 @@ const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
     }, []);
 
     const handleChange = (element: HTMLInputElement, index: number) => {
-        if (!/^[0-9]*$/.test(element.value)) return;
+        const value = element.value;
+        if (!/^[0-9]*$/.test(value)) return;
 
         const newCode = [...code];
-        newCode[index] = element.value;
+        newCode[index] = value;
         setCode(newCode);
 
-        // Focus next input
-        if (element.nextSibling && element.value) {
-            (element.nextSibling as HTMLInputElement).focus();
+        // Move to next input if a character was entered and it's not the last input
+        if (value && index < 5) {
+            inputsRef.current[index + 1]?.focus();
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (e.key === "Backspace" && !code[index] && inputsRef.current[index - 1]) {
             inputsRef.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        const pastedText = e.clipboardData.getData('text');
+        // Sanitize to only get digits, and trim to max 6
+        const pastedCode = pastedText.replace(/\D/g, '').slice(0, 6);
+
+        if (pastedCode) {
+            e.preventDefault();
+            const newCode = pastedCode.split('').concat(new Array(6 - pastedCode.length).fill(''));
+            setCode(newCode);
+            
+            const focusIndex = Math.min(pastedCode.length, 5);
+            const inputToFocus = inputsRef.current[focusIndex];
+            // Use a timeout to focus after the state update has rendered
+            if (inputToFocus) {
+                setTimeout(() => inputToFocus.focus(), 0);
+            }
         }
     };
 
@@ -274,7 +225,6 @@ const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
         if (error) {
             setError(error.message);
         }
-        // On success, the user state will change, and App.tsx's useEffect will navigate to 'home'.
         setLoading(false);
     };
     
@@ -295,39 +245,41 @@ const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
     };
 
     return (
-        <div className="h-full flex flex-col justify-center items-center p-8 text-center">
-            <h2 className="text-2xl font-bold mb-2">{t('signup.verify_code_title')}</h2>
-            <p className="text-muted-foreground mb-8">{t('signup.verify_code_subtitle', { email })}</p>
+        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+            <div className="bg-card border border-border p-4 rounded-full mb-6">
+                <MessageCodeIcon className="w-8 h-8 text-accent" />
+            </div>
+            <h2 className="text-3xl font-bold mb-2">{t('signup.verify_code_title')}</h2>
+            <p className="text-muted-foreground mb-8 max-w-sm">{t('signup.verify_code_subtitle', { email })}</p>
 
-            <div className="flex justify-center gap-2 mb-4" dir="ltr">
-                {code.map((data, index) => (
-                    <input
-                        key={index}
-                        type="tel"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={data}
-                        onChange={(e) => handleChange(e.target, index)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        // FIX: The ref callback for an input element should not return a value. Wrapping the assignment in curly braces fixes the TypeScript error.
-                        ref={el => { inputsRef.current[index] = el }}
-                        className="w-12 h-14 text-center text-2xl font-bold bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
-                    />
+            <div className="flex justify-between bg-card border border-border rounded-xl p-2 w-full max-w-xs mb-4" dir="ltr">
+                {code.map((_, index) => (
+                    <React.Fragment key={index}>
+                        <input
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={code[index]}
+                            onChange={(e) => handleChange(e.target, index)}
+                            onKeyDown={(e) => handleKeyDown(e, index)}
+                            onPaste={handlePaste}
+                            ref={el => { inputsRef.current[index] = el }}
+                            className="w-12 h-14 text-center text-3xl font-mono text-foreground bg-transparent border-0 focus:ring-0"
+                        />
+                        {index < 5 && <div className="w-px h-8 my-auto bg-border/50" />}
+                    </React.Fragment>
                 ))}
             </div>
 
             {error && <p className="text-destructive text-sm my-4">{error}</p>}
             {message && <p className="text-green-500 text-sm my-4">{message}</p>}
             
-            <Button onClick={handleVerify} isLoading={loading} className="w-full !py-4">{t('signup.verify_button')}</Button>
-            
-            <button onClick={handleResend} disabled={loading} className="w-full font-semibold py-3 text-accent hover:text-accent/80 disabled:opacity-50 mt-1">
-                {t('signup.resend_code')}
-            </button>
-
-            <p className="text-sm bg-accent/10 text-accent/90 p-3 rounded-lg mt-8 max-w-xs border border-accent/20">
-                {t('signup.verify_code_info')}
-            </p>
+            <div className="w-full max-w-sm">
+                <Button onClick={handleVerify} isLoading={loading} className="w-full !py-4">{t('signup.verify_button')}</Button>
+                <button onClick={handleResend} disabled={loading} className="w-full font-semibold py-3 text-accent hover:text-accent/80 disabled:opacity-50 mt-2">
+                    {t('signup.resend_code')}
+                </button>
+            </div>
         </div>
     );
 };
@@ -381,35 +333,258 @@ export const SignUpScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ o
     }
 
     return (
-         <div className="h-full flex flex-col justify-center p-8 text-foreground">
+         <div className="min-h-full flex flex-col p-4">
              <PageHeader title="" showBack={true} onBack={() => onNavigate('welcome')} />
-             <div className="text-center mb-10">
-                <h2 className="text-2xl font-bold">{t('signup.title')}</h2>
-                <p className="text-muted-foreground">{t('signup.subtitle')}</p>
+             <div className="flex-grow flex flex-col justify-center items-center text-center px-4">
+                <div className="bg-card border border-border p-4 rounded-full mb-6">
+                    <UserPlusIcon className="w-8 h-8 text-accent" />
+                </div>
+                <h2 className="text-3xl font-bold mb-2">{t('signup.title')}</h2>
+                <p className="text-muted-foreground mb-8">{t('signup.subtitle')}</p>
+
+                <form className="w-full max-w-sm space-y-4" onSubmit={handleSignUp}>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('signup.name_label')} className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" required />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('login.email_label')} className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" required />
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('login.password_label')} className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" required />
+                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t('signup.confirm_password_label')} className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" required />
+
+                    {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
+                    <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>{t('signup.submit_button')}</Button>
+                </form>
+                <p className="text-center text-muted-foreground mt-8">
+                    {t('signup.login_prompt')} <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('login'); }} className="font-semibold text-accent hover:text-accent/80">{t('signup.login_link')}</a>
+                </p>
              </div>
-             <form className="space-y-4" onSubmit={handleSignUp}>
-                 <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t('signup.name_label')}</label>
-                    <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
-                </div>
-                 <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t('login.email_label')}</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
-                </div>
-                <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t('login.password_label')}</label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
-                </div>
-                <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t('signup.confirm_password_label')}</label>
-                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full mt-1 bg-card border border-border rounded-lg p-3 focus:ring-ring focus:border-ring" required />
-                </div>
-                 {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
-                 <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>{t('signup.submit_button')}</Button>
-             </form>
-             <p className="text-center text-muted-foreground mt-8">
-                 {t('signup.login_prompt')} <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('login'); }} className="font-semibold text-accent hover:text-accent/80">{t('signup.login_link')}</a>
-             </p>
          </div>
+    );
+};
+
+const PasswordResetVerificationScreen: React.FC<{ email: string; onNavigate: (page: Page) => void; }> = ({ email, onNavigate }) => {
+    const { t } = useTranslation();
+    const [code, setCode] = useState(new Array(6).fill(""));
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const inputsRef = React.useRef<(HTMLInputElement | null)[]>([]);
+
+    useEffect(() => {
+        inputsRef.current[0]?.focus();
+    }, []);
+
+    const handleChange = (element: HTMLInputElement, index: number) => {
+        const value = element.value;
+        if (!/^[0-9]*$/.test(value)) return;
+        const newCode = [...code];
+        newCode[index] = value;
+        setCode(newCode);
+        if (value && index < 5) {
+            inputsRef.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (e.key === "Backspace" && !code[index] && inputsRef.current[index - 1]) {
+            inputsRef.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        const pastedText = e.clipboardData.getData('text');
+        const pastedCode = pastedText.replace(/\D/g, '').slice(0, 6);
+        if (pastedCode) {
+            e.preventDefault();
+            const newCode = pastedCode.split('').concat(new Array(6 - pastedCode.length).fill(''));
+            setCode(newCode);
+            const focusIndex = Math.min(pastedCode.length, 5);
+            if (inputsRef.current[focusIndex]) {
+                setTimeout(() => inputsRef.current[focusIndex]?.focus(), 0);
+            }
+        }
+    };
+
+    const handleVerify = async () => {
+        const token = code.join('');
+        if (token.length !== 6) {
+            setError(t('signup.error_invalid_code'));
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        
+        const { error } = await supabase.auth.verifyOtp({
+            email,
+            token,
+            type: 'recovery',
+        });
+
+        if (error) {
+            setError(error.message);
+        } else {
+            onNavigate('update-password');
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+            <div className="bg-card border border-border p-4 rounded-full mb-6">
+                <MessageCodeIcon className="w-8 h-8 text-accent" />
+            </div>
+            <h2 className="text-3xl font-bold mb-2">{t('signup.verify_code_title')}</h2>
+            <p className="text-muted-foreground mb-8 max-w-sm">{t('signup.verify_code_subtitle', { email })}</p>
+
+            <div className="flex justify-between bg-card border border-border rounded-xl p-2 w-full max-w-xs mb-4" dir="ltr">
+                {code.map((_, index) => (
+                    <React.Fragment key={index}>
+                        <input
+                            type="tel" inputMode="numeric" maxLength={1} value={code[index]}
+                            onChange={(e) => handleChange(e.target, index)}
+                            onKeyDown={(e) => handleKeyDown(e, index)}
+                            onPaste={handlePaste}
+                            ref={el => { inputsRef.current[index] = el }}
+                            className="w-12 h-14 text-center text-3xl font-mono text-foreground bg-transparent border-0 focus:ring-0"
+                        />
+                        {index < 5 && <div className="w-px h-8 my-auto bg-border/50" />}
+                    </React.Fragment>
+                ))}
+            </div>
+
+            {error && <p className="text-destructive text-sm my-4">{error}</p>}
+            
+            <div className="w-full max-w-sm">
+                <Button onClick={handleVerify} isLoading={loading} className="w-full !py-4">{t('signup.verify_button')}</Button>
+            </div>
+        </div>
+    );
+};
+
+export const ForgotPasswordScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) => {
+    const { t } = useTranslation();
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+
+    const handlePasswordReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+        if (error) {
+            setError(error.message);
+        } else {
+            setSubmittedEmail(email);
+        }
+        setLoading(false);
+    };
+
+    if (submittedEmail) {
+        return (
+            <div className="min-h-full flex flex-col p-4">
+                <PageHeader title="" showBack={true} onBack={() => setSubmittedEmail(null)} />
+                <PasswordResetVerificationScreen email={submittedEmail} onNavigate={onNavigate} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-full flex flex-col p-4">
+            <PageHeader title="" showBack={true} onBack={() => onNavigate('login')} />
+            <div className="flex-grow flex flex-col justify-center items-center text-center px-4">
+                <div className="bg-card border border-border p-4 rounded-full mb-6">
+                    <KeyIcon className="w-8 h-8 text-accent" />
+                </div>
+                <h2 className="text-3xl font-bold mb-2">Forgot Password?</h2>
+                <p className="text-muted-foreground mb-8 max-w-sm">No worries! Enter your email and we'll send you a code to reset it.</p>
+                
+                <form className="w-full max-w-sm space-y-4" onSubmit={handlePasswordReset}>
+                    <input 
+                        type="email" 
+                        value={email} 
+                        onChange={e => setEmail(e.target.value)} 
+                        className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" 
+                        placeholder={t('login.email_label')}
+                        required 
+                    />
+                    {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
+                    <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>Send Code</Button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+export const UpdatePasswordScreen: React.FC<{ onNavigate: (page: Page, resetStack?: boolean) => void }> = ({ onNavigate }) => {
+    const { t } = useTranslation();
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (password !== confirmPassword) {
+            setError(t('signup.error_passwords_mismatch'));
+            return;
+        }
+        if (!password) {
+            setError(t('account.error_password_empty'));
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        setMessage(null);
+
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+            setError(error.message);
+            setLoading(false);
+        } else {
+            setMessage("Password updated successfully! You will be redirected shortly.");
+            setTimeout(() => {
+                onNavigate('home', true);
+            }, 2500);
+        }
+    };
+
+    return (
+        <div className="min-h-full flex flex-col p-4">
+            <PageHeader title="" showBack={false} />
+            <div className="flex-grow flex flex-col justify-center items-center text-center px-4">
+                <div className="bg-card border border-border p-4 rounded-full mb-6">
+                    <KeyIcon className="w-8 h-8 text-accent" />
+                </div>
+                <h2 className="text-3xl font-bold mb-2">Set a New Password</h2>
+                <p className="text-muted-foreground mb-8 max-w-sm">Your new password must be different from previously used passwords.</p>
+                
+                <form className="w-full max-w-sm space-y-4" onSubmit={handleUpdatePassword}>
+                    <input 
+                        type="password" 
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                        className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" 
+                        placeholder={t('account.new_password')}
+                        required 
+                    />
+                     <input 
+                        type="password" 
+                        value={confirmPassword} 
+                        onChange={e => setConfirmPassword(e.target.value)} 
+                        className="w-full bg-card border border-border rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-accent focus:border-accent" 
+                        placeholder={t('signup.confirm_password_label')}
+                        required 
+                    />
+
+                    {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
+                    {message && <p className="text-green-400 text-sm text-center pt-2">{message}</p>}
+
+                    <Button type="submit" className="w-full !py-4 !mt-6" isLoading={loading}>Update Password</Button>
+                </form>
+            </div>
+        </div>
     );
 };

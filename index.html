@@ -138,6 +138,76 @@
         animation: card-entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         opacity: 0;
       }
+      .dark-gradient-background {
+        background: radial-gradient(ellipse at 50% 30%, hsl(var(--accent) / 0.1), transparent 70%), hsl(var(--background));
+      }
+      @keyframes orbit-rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-orbit-rotate {
+        animation: orbit-rotate 60s linear infinite;
+      }
+      @keyframes icon-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-icon-float {
+        animation: icon-float 4s ease-in-out infinite;
+      }
+      .gradient-text {
+        background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+      }
+      .orbit-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 1 / 1;
+      }
+      .orbit-path {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border: 2px solid hsl(var(--border) / 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .orbit-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform-origin: center center;
+        margin-top: -24px; /* half of height */
+        margin-left: -24px; /* half of width */
+      }
+      .dark-glow-1 {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: hsl(var(--accent) / 0.15);
+        border-radius: 50%;
+        filter: blur(100px);
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+      }
+      .dark-glow-2 {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: hsl(var(--primary) / 0.1);
+        border-radius: 50%;
+        filter: blur(120px);
+        bottom: 0;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        z-index: 0;
+      }
     </style>
   <script type="importmap">
 {

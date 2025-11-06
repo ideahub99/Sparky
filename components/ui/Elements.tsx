@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { HomeIcon, GridIcon, ClockIcon, UserIcon, ArrowLeftIcon, LogoIcon } from '../icons';
 import type { Page } from '../../types';
-// FIX: Corrected import path for useTranslation hook.
 import { useTranslation } from '../../contexts';
 
 // --- Button ---
@@ -105,15 +103,26 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activePage, setPage }) => 
         { page: 'history', icon: ClockIcon, label: t('nav.history') },
         { page: 'profile', icon: UserIcon, label: t('nav.profile') },
     ];
+    const activeIndex = navItems.findIndex(item => item.page === activePage);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto h-20 bg-background/80 backdrop-blur-lg border-t border-border rounded-t-2xl flex justify-around items-center z-50">
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto bg-card/80 backdrop-blur-lg rounded-full flex items-center z-50 p-1.5 shadow-2xl">
+            <div 
+                className="absolute top-1.5 left-0 bottom-1.5 w-1/4 bg-accent rounded-full transition-transform duration-300 ease-in-out"
+                style={{ transform: `translateX(calc(${activeIndex * 100}%))` }}
+            />
+
             {navItems.map(item => {
                 const isActive = activePage === item.page;
                 return (
-                    <button key={item.page} onClick={() => setPage(item.page as Page)} className={`flex flex-col items-center justify-center w-16 transition-colors ${isActive ? 'text-accent' : 'text-muted-foreground hover:text-foreground'}`}>
-                        <item.icon className="w-6 h-6 mb-1" />
-                        <span className={`text-xs font-semibold ${isActive ? 'text-accent' : 'text-muted-foreground'}`}>{item.label}</span>
+                    <button 
+                        key={item.page} 
+                        onClick={() => setPage(item.page as Page)} 
+                        className="relative flex-1 flex flex-col items-center justify-center py-2 transition-colors duration-300 z-10"
+                        aria-current={isActive ? 'page' : undefined}
+                    >
+                        <item.icon className={`w-6 h-6 mb-0.5 transition-colors ${isActive ? 'text-accent-foreground' : 'text-muted-foreground'}`} />
+                        <span className={`text-xs font-bold transition-colors ${isActive ? 'text-accent-foreground' : 'text-muted-foreground'}`}>{item.label}</span>
                     </button>
                 )
             })}
@@ -204,4 +213,97 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ message }) => {
       )}
     </div>
   );
+};
+
+
+// --- CircularProgress ---
+interface CircularProgressProps {
+  percentage: number;
+  color: string;
+  size?: number;
+  strokeWidth?: number;
+}
+export const CircularProgress: React.FC<CircularProgressProps> = ({
+  percentage,
+  color,
+  size = 100,
+  strokeWidth = 8,
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          className="text-muted/50"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        <circle
+          className="transition-all duration-500 ease-in-out"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center">
+        <span className="text-xl font-bold text-foreground">{Math.round(percentage)}%</span>
+      </div>
+    </div>
+  );
+};
+
+// --- LineChart ---
+interface LineChartProps {
+    data: number[];
+    color?: string;
+    height?: number;
+    width?: number;
+}
+export const LineChart: React.FC<LineChartProps> = ({ data, color = 'hsl(var(--accent))', height = 150, width = 350 }) => {
+    if (data.length < 2) {
+        return <div style={{ height, width }} className="flex items-center justify-center text-muted-foreground text-sm">Not enough data to display chart.</div>;
+    }
+
+    const maxVal = Math.max(...data) || 1;
+    const points = data.map((val, i) => {
+        const x = (i / (data.length - 1)) * width;
+        const y = height - (val / maxVal) * (height - 10); // Leave some padding
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="w-full">
+            <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.3 }} />
+                    <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
+                </linearGradient>
+            </defs>
+            <path
+                d={`M0,${height} ${points} L${width},${height}`}
+                fill="url(#gradient)"
+            />
+            <polyline
+                fill="none"
+                stroke={color}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={points}
+            />
+        </svg>
+    );
 };
