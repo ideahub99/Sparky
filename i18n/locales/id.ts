@@ -136,6 +136,8 @@ export const id = {
     "notifications.title": "Notifikasi",
     "notifications.empty_title": "Tidak Ada Notifikasi",
     "notifications.empty_subtitle": "Anda sudah terupdate!",
+    "notifications.general_welcome.title": "Kami Merindukan Anda!",
+    "notifications.general_welcome.message": "Sudah lama tidak bertemu. Kembalilah dan ciptakan sesuatu yang luar biasa dengan alat baru kami!",
     
     "notification_settings.title": "Pengaturan Notifikasi",
     "notification_settings.description": "Pilih apa yang ingin Anda beri tahu.",

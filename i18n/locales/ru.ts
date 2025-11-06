@@ -136,6 +136,8 @@ export const ru = {
     "notifications.title": "Уведомления",
     "notifications.empty_title": "Нет уведомлений",
     "notifications.empty_subtitle": "Вы в курсе всех событий!",
+    "notifications.general_welcome.title": "Мы по вам скучали!",
+    "notifications.general_welcome.message": "Прошло много времени. Возвращайтесь и создайте что-нибудь удивительное с нашими новыми инструментами!",
     
     "notification_settings.title": "Настройки уведомлений",
     "notification_settings.description": "Выберите, о чем вы хотите получать уведомления.",

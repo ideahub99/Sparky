@@ -136,6 +136,8 @@ export const en = {
     "notifications.title": "Notifications",
     "notifications.empty_title": "No Notifications",
     "notifications.empty_subtitle": "You're all caught up!",
+    "notifications.general_welcome.title": "We've Missed You!",
+    "notifications.general_welcome.message": "It's been a while. Come back and create something amazing with our new tools!",
     
     "notification_settings.title": "Notification Settings",
     "notification_settings.description": "Choose what you want to be notified about.",

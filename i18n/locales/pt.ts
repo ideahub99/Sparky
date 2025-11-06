@@ -136,6 +136,8 @@ export const pt = {
     "notifications.title": "Notificações",
     "notifications.empty_title": "Nenhuma notificação",
     "notifications.empty_subtitle": "Você está em dia!",
+    "notifications.general_welcome.title": "Sentimos sua falta!",
+    "notifications.general_welcome.message": "Já faz um tempo. Volte e crie algo incrível com nossas novas ferramentas!",
     
     "notification_settings.title": "Configurações de notificação",
     "notification_settings.description": "Escolha sobre o que você quer ser notificado.",

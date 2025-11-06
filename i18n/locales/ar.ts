@@ -136,6 +136,8 @@ export const ar = {
     "notifications.title": "الإشعارات",
     "notifications.empty_title": "لا توجد إشعارات",
     "notifications.empty_subtitle": "أنت على اطلاع دائم!",
+    "notifications.general_welcome.title": "لقد اشتقنا إليك!",
+    "notifications.general_welcome.message": "لقد مر وقت طويل. عد وأنشئ شيئًا رائعًا باستخدام أدواتنا الجديدة!",
     
     "notification_settings.title": "إعدادات الإشعارات",
     "notification_settings.description": "اختر ما تريد أن يتم إعلامك به.",

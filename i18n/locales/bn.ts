@@ -136,6 +136,8 @@ export const bn = {
     "notifications.title": "বিজ্ঞপ্তি",
     "notifications.empty_title": "কোনো বিজ্ঞপ্তি নেই",
     "notifications.empty_subtitle": "আপনি আপ টু ডেট আছেন!",
+    "notifications.general_welcome.title": "আমরা আপনাকে মিস করেছি!",
+    "notifications.general_welcome.message": "অনেক দিন হয়ে গেল। ফিরে আসুন এবং আমাদের নতুন সরঞ্জাম দিয়ে আশ্চর্যজনক কিছু তৈরি করুন!",
     
     "notification_settings.title": "বিজ্ঞপ্তি সেটিংস",
     "notification_settings.description": "আপনি কি সম্পর্কে বিজ্ঞপ্তি পেতে চান তা চয়ন করুন।",

@@ -96,6 +96,7 @@ export interface Generation {
   toolName: string; // This will be a translation key
   created_at: string;
   imageUrl?: string; // optional as some history items might not have one
+  image_url_hq?: string; // Path to high-quality image in private bucket
 }
 
 export interface CreditUsage {

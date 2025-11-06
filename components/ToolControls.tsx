@@ -4,6 +4,7 @@ import { useTranslation } from '../contexts';
 import { Slider } from './ui/Elements';
 import { HAIR_COLORS, SKIN_COLORS } from '../constants/tools';
 import { CrownIcon } from './icons';
+import { useCachedImage } from '../hooks/useCachedImage';
 
 // --- Helper Components for Controls ---
 
@@ -54,6 +55,30 @@ const SegmentedControl: React.FC<{
     </div>
   );
 };
+
+const CachedHairstyleImage: React.FC<{ style: Hairstyle }> = ({ style }) => {
+    const { imageSrc, isLoading } = useCachedImage(style.imageUrl);
+
+    if (isLoading) {
+        return (
+            <div className="w-full h-full bg-muted animate-pulse rounded-lg"></div>
+        );
+    }
+
+    return (
+        <>
+            <img src={imageSrc || style.imageUrl} alt={style.name} className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'}/>
+            {style.isPro && (
+                <div className="absolute top-1.5 right-1.5 bg-accent/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
+                    <CrownIcon className="w-3 h-3 text-white" />
+                </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+            <p className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-bold text-white text-center leading-tight">{style.name}</p>
+        </>
+    );
+};
+
 
 const HairstyleBrowser: React.FC<{
   hairstyles: Hairstyle[];
@@ -114,14 +139,7 @@ const HairstyleBrowser: React.FC<{
                     onClick={() => onSelect(style.name)} 
                     className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 bg-muted ${selectedStyle === style.name ? 'border-accent' : 'border-transparent'}`}
                 >
-                    <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'}/>
-                    {style.isPro && (
-                        <div className="absolute top-1.5 right-1.5 bg-accent/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
-                            <CrownIcon className="w-3 h-3 text-white" />
-                        </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                    <p className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-bold text-white text-center leading-tight">{style.name}</p>
+                    <CachedHairstyleImage style={style} />
                 </div>
             ))}
         </div>

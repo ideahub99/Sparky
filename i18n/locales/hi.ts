@@ -136,6 +136,8 @@ export const hi = {
     "notifications.title": "सूचनाएं",
     "notifications.empty_title": "कोई सूचना नहीं",
     "notifications.empty_subtitle": "आप पूरी तरह से अपडेट हैं!",
+    "notifications.general_welcome.title": "हमें आपकी याद आई!",
+    "notifications.general_welcome.message": "बहुत समय हो गया। वापस आएं और हमारे नए उपकरणों के साथ कुछ अद्भुत बनाएं!",
     
     "notification_settings.title": "अधिसूचना सेटिंग्स",
     "notification_settings.description": "चुनें कि आप किस बारे में अधिसूचित होना चाहते हैं।",

@@ -136,6 +136,8 @@ export const fr = {
     "notifications.title": "Notifications",
     "notifications.empty_title": "Aucune notification",
     "notifications.empty_subtitle": "Vous êtes à jour !",
+    "notifications.general_welcome.title": "Vous nous avez manqué !",
+    "notifications.general_welcome.message": "Cela fait un moment. Revenez et créez quelque chose d'incroyable avec nos nouveaux outils !",
     
     "notification_settings.title": "Paramètres de notification",
     "notification_settings.description": "Choisissez ce dont vous voulez être notifié.",

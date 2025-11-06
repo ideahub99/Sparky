@@ -7,7 +7,7 @@ import { ImageUploader } from '../components/ImageUploader';
 import { EditorCanvas } from '../components/EditorCanvas';
 import { ToolSidebar } from '../components/ToolSidebar';
 import { AnalysisReport } from '../components/AnalysisReport';
-import { transformImage, analyzeFace } from '../services/geminiService';
+import { transformImage, analyzeFace, getHqDownloadUrl } from '../services/geminiService';
 import { supabase } from '../lib/supabaseClient';
 import { addWatermark } from '../lib/watermark';
 
@@ -26,6 +26,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
     const [originalImage, setOriginalImage] = useState<Blob | null>(null);
     const [history, setHistory] = useState<Blob[]>([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
+    const [lastGenerationId, setLastGenerationId] = useState<number | null>(null);
 
     const [params, setParams] = useState<ToolParameters>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -89,44 +90,29 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
 
         try {
             if (activeTool.type === 'ANALYSIS') {
-                const result = await analyzeFace(imageToProcess);
+                const result = await analyzeFace(imageToProcess, user.id);
                 setAnalysisResult(result);
-                 // FIX: Save analysis tool usage to generations history.
-                await supabase.from('generations').insert({
-                    user_id: user.id,
-                    tool_id: activeTool.id,
-                });
+                await supabase.from('generations').insert({ user_id: user.id, tool_id: activeTool.id });
             } else {
-                const base64Image = await transformImage(imageToProcess, activeTool, params);
-                const byteString = atob(base64Image);
+                const result = await transformImage(imageToProcess, activeTool, params, user.id);
+                setLastGenerationId(result.generationId);
+                
+                const byteString = atob(result.newImageBase64);
                 const ab = new ArrayBuffer(byteString.length);
                 const ia = new Uint8Array(ab);
                 for (let i = 0; i < byteString.length; i++) {
                     ia[i] = byteString.charCodeAt(i);
                 }
-                const newImageBlob = new Blob([ab], { type: 'image/png' });
+                const newImageBlob = new Blob([ab], { type: 'image/jpeg' });
                 
-                // FIX: Upload generated image to storage and save record to generations table.
-                const filePath = `${user.id}/${activeTool.id}-${new Date().getTime()}.png`;
-                const { error: uploadError } = await supabase.storage.from('generations').upload(filePath, newImageBlob);
-                if (uploadError) throw new Error(`Storage Error: ${uploadError.message}`);
-
-                const { data: urlData } = supabase.storage.from('generations').getPublicUrl(filePath);
-                if (!urlData) throw new Error('Could not get public URL for the generated image.');
-
-                await supabase.from('generations').insert({
-                    user_id: user.id,
-                    tool_id: activeTool.id,
-                    image_url: urlData.publicUrl,
-                });
-
                 const newHistory = history.slice(0, historyIndex + 1);
                 newHistory.push(newImageBlob);
                 setHistory(newHistory);
                 setHistoryIndex(newHistory.length - 1);
             }
 
-            // Record credit usage. The actual deduction is now handled by a database trigger.
+            // The credit deduction is now handled by a database trigger.
+            // This client-side insert is all that's needed.
             await supabase.from('credit_usage').insert({
               user_id: user.id,
               tool_id: activeTool.id,
@@ -147,6 +133,29 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
 
     const handleDownload = async () => {
         if (!currentImageUrl) return;
+
+        // Pro users get an option for high-quality download
+        if (user.plan.name !== 'Free' && lastGenerationId) {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const signedUrl = await getHqDownloadUrl(lastGenerationId);
+                const a = document.createElement('a');
+                a.href = signedUrl;
+                // HQ downloads are not watermarked as a premium benefit
+                a.download = `sparky-edit-${new Date().getTime()}-hq.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e: any) {
+                setError(e.message || 'Failed to download high-quality image.');
+            } finally {
+                setIsLoading(false);
+            }
+            return;
+        }
+
+        // Standard download for free users (optimized, watermarked)
         setIsLoading(true);
         setError(null);
         try {
@@ -164,6 +173,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
             setIsLoading(false);
         }
     };
+
 
     const handleShare = async () => {
         if (!currentImageUrl) return;
@@ -213,7 +223,6 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
                     canUndo={canUndo}
                     canRedo={canRedo}
                 />
-                {/* FIX: Replaced duplicated sidebar logic with the ToolSidebar component to resolve the 'Cannot find name ToolControls' error and improve code reuse. */}
                 <ToolSidebar
                     activeTool={activeTool}
                     params={params}
