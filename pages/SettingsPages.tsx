@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Page, User, Plan, Notification, NotificationPreferences, CreditUsage, Tool, Language } from '../types';
 import { useTranslation, useTheme, ACCENT_COLORS } from '../contexts';
@@ -80,8 +82,14 @@ export const SubscriptionPage: React.FC<{ goBack: () => void; onNavigate: (page:
                     return (
                         <div key={plan.id} className={`p-5 rounded-xl border-2 ${isCurrent ? 'border-accent bg-accent/10' : 'border-border bg-card'}`}>
                             {isCurrent && <p className="text-xs font-bold text-accent mb-1">{t('subscription.current_plan')}</p>}
-                            <h3 className="text-xl font-bold">{plan.name}</h3>
-                            <p className="text-muted-foreground my-2">{t('subscription.plan_credits', { count: plan.monthly_credits })}</p>
+                            <div className="flex justify-between items-baseline">
+                                <h3 className="text-xl font-bold">{plan.name}</h3>
+                                {plan.price_usd && (
+                                    <p className="text-2xl font-bold">${plan.price_usd}<span className="text-sm font-normal text-muted-foreground">{t('subscription.per_month')}</span></p>
+                                )}
+                            </div>
+                            {/* FIX: Convert number to string for translation function. */}
+                            <p className="text-muted-foreground my-2">{t('subscription.plan_credits', { count: plan.monthly_credits.toString() })}</p>
                             <ul className="text-sm space-y-1 my-4">
                                 <li>✓ {t('subscription.feature1')}</li>
                                 <li>✓ {t('subscription.feature2')}</li>
@@ -202,7 +210,8 @@ export const TrackingPage: React.FC<{ goBack: () => void; creditUsage: CreditUsa
                             {tool && <tool.icon className="w-8 h-8 me-4 p-1.5 rounded-md" style={{ backgroundColor: TOOL_COLORS[tool.id] || TOOL_COLORS.default, color: 'white' }} />}
                             <div className="flex-grow">
                                 <p className="font-semibold">{t(toolName)}</p>
-                                <p className="text-sm text-muted-foreground">{t('tracking.credits_used', { count: credits })}</p>
+                                {/* FIX: Convert number to string for translation function. */}
+                                <p className="text-sm text-muted-foreground">{t('tracking.credits_used', { count: credits.toString() })}</p>
                             </div>
                             <p className="font-bold text-lg">{credits}</p>
                         </div>

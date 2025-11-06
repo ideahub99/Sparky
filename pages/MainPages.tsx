@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Page, User, Tool, Generation, Notification } from '../types';
 import { useTranslation } from '../contexts';
-import { PageHeader, Button } from '../components/ui/Elements';
+import { PageHeader, Button, Modal } from '../components/ui/Elements';
 import { SettingsIcon, BellIcon, ChevronRightIcon, UserCircleIcon, CreditIcon, ArrowRightOnRectangleIcon } from '../components/icons';
 import { supabase } from '../lib/supabaseClient';
 
@@ -194,6 +194,7 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, notifications, onNavigate }) => {
     const { t } = useTranslation();
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const unreadNotifications = notifications.filter(n => !n.read).length;
 
     const handleLogout = async () => {
@@ -263,12 +264,27 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, notifications, o
                 </div>
                 
                 <div className="pt-4">
-                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 text-destructive font-semibold p-3 bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">
+                    <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center justify-center gap-2 text-destructive font-semibold p-3 bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">
                         <ArrowRightOnRectangleIcon className="w-5 h-5"/>
                         <span>{t('profile.logout')}</span>
                     </button>
                 </div>
             </div>
+            {showLogoutModal && (
+                <Modal title={t('modal.logout.title')} onClose={() => setShowLogoutModal(false)}>
+                    <div className="text-center">
+                        <p className="text-muted-foreground mb-6">{t('modal.logout.text')}</p>
+                        <div className="flex flex-col gap-3">
+                            <Button className="w-full" onClick={() => setShowLogoutModal(false)}>
+                                {t('modal.logout.cancel_button')}
+                            </Button>
+                            <button onClick={handleLogout} className="w-full font-semibold py-3 text-destructive hover:text-destructive/80">
+                                {t('modal.logout.confirm_button')}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 };

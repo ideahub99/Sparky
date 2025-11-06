@@ -1,7 +1,7 @@
 // FIX: Implemented the missing EditorCanvas component.
 import React from 'react';
 import { UndoIcon, RedoIcon, DownloadIcon, ShareIcon } from './icons';
-import { Spinner } from './ui/Elements';
+import { FlameLoader } from './ui/Elements';
 import { useTranslation } from '../contexts';
 
 interface EditorCanvasProps {
@@ -35,7 +35,7 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
       <div className="relative w-full h-full flex items-center justify-center">
         {isLoading && (
           <div className="absolute inset-0 bg-black/70 z-20 flex flex-col items-center justify-center rounded-2xl">
-            <Spinner />
+            <FlameLoader />
             <p className="mt-4 text-white font-semibold">{t('editor.loading')}</p>
           </div>
         )}

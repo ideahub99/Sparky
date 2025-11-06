@@ -38,7 +38,7 @@ export const AnalysisReport: React.FC<{ result: FacialAnalysisResult; onDone: ()
                             <p className="font-bold text-lg">{result.emotionalExpression}</p>
                         </div>
                     </div>
-                     <p className="text-muted-foreground mt-4 text-sm">{result.overallAnalysis}</p>
+                     <p className="text-muted-foreground mt-4 text-sm break-words">{result.overallAnalysis}</p>
                 </div>
 
                 <div className="bg-card border border-border rounded-2xl p-4">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HomeIcon, GridIcon, ClockIcon, UserIcon, ArrowLeftIcon } from '../icons';
+import { HomeIcon, GridIcon, ClockIcon, UserIcon, ArrowLeftIcon, LogoIcon } from '../icons';
 import type { Page } from '../../types';
 // FIX: Corrected import path for useTranslation hook.
 import { useTranslation } from '../../contexts';
@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button: React.FC<ButtonProps> = ({ children, className, isLoading, ...props }) => {
   return (
     <button
-      className={`bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out flex items-center justify-center shadow-lg disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed ${className}`}
+      className={`bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-3 px-6 rounded-2xl transition-all duration-200 ease-in-out flex items-center justify-center shadow-lg shadow-accent/20 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed ${className}`}
       disabled={isLoading || props.disabled}
       {...props}
     >
@@ -43,7 +43,7 @@ export const Slider: React.FC<SliderProps> = ({ className, ...props }) => {
   );
 };
 
-// --- Spinner ---
+// --- Spinners and Loaders ---
 interface SpinnerProps {
   small?: boolean;
 }
@@ -56,6 +56,12 @@ export const Spinner: React.FC<SpinnerProps> = ({ small }) => (
   >
     <span className="sr-only">Loading...</span>
   </div>
+);
+
+export const FlameLoader: React.FC = () => (
+    <div className="flex items-center justify-center">
+        <LogoIcon className="w-16 h-16 animate-flame text-accent" />
+    </div>
 );
 
 

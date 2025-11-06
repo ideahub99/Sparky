@@ -3,6 +3,7 @@ import type { Tool, ToolParameters, Hairstyle } from '../types';
 import { useTranslation } from '../contexts';
 import { Slider } from './ui/Elements';
 import { HAIR_COLORS, SKIN_COLORS } from '../constants/tools';
+import { CrownIcon } from './icons';
 
 // --- Helper Components for Controls ---
 
@@ -11,7 +12,7 @@ const ColorPalette: React.FC<{
   selectedColor?: string;
   onSelect: (color: string) => void;
 }> = ({ colors, selectedColor, onSelect }) => (
-  <div className="flex flex-wrap gap-3 mt-2">
+  <div className="flex flex-wrap gap-4 mt-2">
     {colors.map(colorItem => {
       const color = typeof colorItem === 'string' ? colorItem : colorItem.hex;
       const name = typeof colorItem === 'string' ? color : colorItem.name;
@@ -19,11 +20,9 @@ const ColorPalette: React.FC<{
         <button
           key={color}
           onClick={() => onSelect(color)}
-          className="w-8 h-8 rounded-full border-2 transition-transform duration-150"
+          className={`w-10 h-10 rounded-full border border-border/50 transition-transform duration-150 focus:outline-none ${selectedColor === color ? 'ring-2 ring-offset-2 ring-accent ring-offset-card' : ''}`}
           style={{ 
             backgroundColor: color,
-            borderColor: selectedColor === color ? 'white' : 'transparent',
-            transform: selectedColor === color ? 'scale(1.15)' : 'scale(1)',
           }}
           aria-label={`Select color ${name}`}
           title={name}
@@ -66,7 +65,10 @@ const HairstyleBrowser: React.FC<{
 
     const categories = useMemo(() => {
         const genderHairstyles = hairstyles.filter(h => h.gender === gender);
-        return ['All', ...Array.from(new Set(genderHairstyles.map(h => h.category)))];
+        // FIX: Filter out any empty/falsy category names and sort them for a consistent UI.
+        const uniqueCategories = [...new Set(genderHairstyles.map(h => h.category).filter(Boolean))];
+        uniqueCategories.sort();
+        return ['All', ...uniqueCategories];
     }, [hairstyles, gender]);
     
     const [activeCategory, setActiveCategory] = useState('All');
@@ -101,7 +103,7 @@ const HairstyleBrowser: React.FC<{
                 activeCategory === category ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
             >
-              {t(`editor.hairstyle.category.${category.toLowerCase()}`)}
+              <span className="whitespace-nowrap">{t(`editor.hairstyle.category.${category.toLowerCase()}`)}</span>
             </button>
           ))}
         </div>
@@ -110,9 +112,14 @@ const HairstyleBrowser: React.FC<{
                 <div 
                     key={style.id} 
                     onClick={() => onSelect(style.name)} 
-                    className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 ${selectedStyle === style.name ? 'border-accent' : 'border-transparent'}`}
+                    className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 bg-muted ${selectedStyle === style.name ? 'border-accent' : 'border-transparent'}`}
                 >
-                    <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover"/>
+                    <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'}/>
+                    {style.isPro && (
+                        <div className="absolute top-1.5 right-1.5 bg-accent/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
+                            <CrownIcon className="w-3 h-3 text-white" />
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                     <p className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-bold text-white text-center leading-tight">{style.name}</p>
                 </div>

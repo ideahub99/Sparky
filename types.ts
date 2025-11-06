@@ -1,12 +1,12 @@
-
 // FIX: Use named import for ComponentType to avoid issues with default type imports.
-import type { ComponentType } from 'react';
+import type { ComponentType, CSSProperties } from 'react';
 
 export interface Plan {
   id: number;
-  name: 'Free' | 'Pro EGP' | 'Pro USD' | 'Enterprise';
+  name: 'Free' | 'Pro' | 'Enterprise';
   monthly_credits: number;
   max_daily_credits: number;
+  price_usd?: number;
 }
 
 export interface NotificationPreferences {
@@ -41,7 +41,8 @@ export interface Tool {
   name: string; // This will now be a translation key, e.g., "tool.hairstyle.name"
   description: string; // This will now be a translation key
   type: ToolType;
-  icon: ComponentType<{ className?: string }>;
+  // FIX: Allow style prop on tool icons to fix type error in TrackingPage
+  icon: ComponentType<{ className?: string; style?: CSSProperties }>;
   coverImage?: string; // For home page
 }
 

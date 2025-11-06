@@ -1,18 +1,45 @@
 
+
 import React from 'react';
 
-type IconProps = { className?: string };
+// FIX: Add `style` property to IconProps to allow inline styling. This resolves an error in TrackingPage where icons were being styled.
+type IconProps = { className?: string; style?: React.CSSProperties };
 
 // --- UI Icons ---
 
 // FIX: Added missing LogoIcon component.
 export const LogoIcon: React.FC<IconProps> = (props) => (
-    <svg {...props} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 6C14.0589 6 6 14.0589 6 24C6 33.9411 14.0589 42 24 42C33.9411 42 42 33.9411 42 24C42 14.0589 33.9411 6 24 6Z" fill="currentColor" opacity="0.3"/>
-        <path d="M30 21C30 24.3137 27.3137 27 24 27C20.6863 27 18 24.3137 18 21C18 17.6863 20.6863 15 24 15C27.3137 15 30 17.6863 30 21Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12 36C12 31.5817 17.3726 28 24 28C30.6274 28 36 31.5817 36 36" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg {...props} width="100%" height="100%" viewBox="0 0 14 14" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="sparkyRadialGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" style={{stopColor:'#FFFFFF', stopOpacity:'0.8'}}/>
+                <stop offset="30%" style={{stopColor:'#9A76E8', stopOpacity:'1'}}/>
+                <stop offset="100%" style={{stopColor:'#5D3FD3', stopOpacity:'1'}}/>
+            </radialGradient>
+            <filter id="fireEffect" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.4" result="blurOut"/>
+                <feColorMatrix in="blurOut" type="matrix" values="1 0 0 0 0
+                                                                    0 1 0 0 0
+                                                                    0 0 1 0 0
+                                                                    0 0 0 1.2 0" result="glow"/>
+                <feOffset dx="0.1" dy="0.1" in="glow" result="offsetGlow"/>
+                <feMerge>
+                    <feMergeNode in="offsetGlow"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <path fill="url(#sparkyRadialGradient)" filter="url(#fireEffect)" d="M 9.1,5.5 C 8.4245,5.95 8.2,6.85 8.275,7.45 7.15,6.325 10,3.175 6.775,1 8.575,3.7 4,5.875 4,9.7 4,11.2 4.975,12.5505 7,13 9.025,12.551 10,11.2 10,9.7 10,7.45 8.65,6.7 9.1,5.5 Z M 7,11.426 c -0.9,0 -1.725,-0.75 -1.725,-1.7255 0,-0.9005 0.75,-1.725 1.725,-1.725 0.9,0 1.725,0.75 1.725,1.725 C 8.65,10.676 7.9,11.426 7,11.426 Z"/>
     </svg>
 );
+
+
+export const CrownIcon: React.FC<IconProps> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path fillRule="evenodd" d="M19.5 21a3 3 0 01-3-3V15.75L12 3.75l-4.5 12V18a3 3 0 01-3 3h15zm-3-5.25a.75.75 0 01.75.75V18a1.5 1.5 0 001.5 1.5h.75a.75.75 0 010 1.5h-1.5a3 3 0 01-3-3v-1.5a.75.75 0 01.75-.75zM8.25 18v-2.25a.75.75 0 01.75-.75h.75a.75.75 0 01.75.75V18a1.5 1.5 0 001.5 1.5h.75a.75.75 0 010 1.5H9a3 3 0 01-3-3v-1.5a.75.75 0 01.75-.75h.001z" clipRule="evenodd" />
+    </svg>
+);
+
 
 export const ChartBarIcon: React.FC<IconProps> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

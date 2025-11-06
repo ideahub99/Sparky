@@ -56,15 +56,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageConfirm }) 
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <h2 className="text-2xl font-bold mb-2">{t('uploader.title')}</h2>
         <p className="text-muted-foreground mb-8 max-w-sm">{t('uploader.subtitle')}</p>
-        <div className="w-full space-y-4">
-            <Button onClick={() => fileInputRef.current?.click()} className="w-full !py-4 !bg-card !text-foreground border border-border hover:!bg-muted">
-                <UploadIcon className="w-5 h-5 me-2" />
-                {t('uploader.upload_gallery')}
-            </Button>
-            <Button onClick={() => cameraInputRef.current?.click()} className="w-full !py-4 !bg-card !text-foreground border border-border hover:!bg-muted">
-                 <CameraIcon className="w-5 h-5 me-2" />
-                {t('uploader.take_photo')}
-            </Button>
+        <div className="w-full max-w-sm mx-auto space-y-4">
+            <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full p-6 bg-card border border-border rounded-2xl hover:border-accent/50 transition-colors group flex items-center gap-4"
+            >
+                <div className="bg-muted p-3 rounded-full">
+                     <UploadIcon className="w-6 h-6 text-accent transition-transform group-hover:scale-110" />
+                </div>
+                <span className="font-bold text-lg text-foreground">{t('uploader.upload_gallery')}</span>
+            </button>
+            <button
+                onClick={() => cameraInputRef.current?.click()}
+                className="w-full p-6 bg-card border border-border rounded-2xl hover:border-accent/50 transition-colors group flex items-center gap-4"
+            >
+                <div className="bg-muted p-3 rounded-full">
+                    <CameraIcon className="w-6 h-6 text-accent transition-transform group-hover:scale-110" />
+                </div>
+                <span className="font-bold text-lg text-foreground">{t('uploader.take_photo')}</span>
+            </button>
         </div>
         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
         <input type="file" accept="image/*" capture="user" ref={cameraInputRef} onChange={handleFileChange} className="hidden" />

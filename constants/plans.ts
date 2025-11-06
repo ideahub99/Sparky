@@ -7,9 +7,10 @@ export const PLAN_FREE: Plan = {
   max_daily_credits: 1,
 };
 
-export const PLAN_PRO_USD: Plan = {
+// FIX: Changed plan name from 'Pro USD' to 'Pro' to align with the Plan type definition.
+export const PLAN_PRO: Plan = {
   id: 3,
-  name: 'Pro USD',
+  name: 'Pro',
   monthly_credits: 25,
   max_daily_credits: 5,
 };

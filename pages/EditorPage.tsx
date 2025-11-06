@@ -9,6 +9,7 @@ import { ToolSidebar } from '../components/ToolSidebar';
 import { AnalysisReport } from '../components/AnalysisReport';
 import { transformImage, analyzeFace } from '../services/geminiService';
 import { supabase } from '../lib/supabaseClient';
+import { addWatermark } from '../lib/watermark';
 
 interface EditorPageProps {
   activeTool: Tool;
@@ -33,6 +34,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
     
     // Modal states
     const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     
     const originalImageUrl = useMemo(() => originalImage ? URL.createObjectURL(originalImage) : null, [originalImage]);
     const currentImageUrl = useMemo(() => {
@@ -65,6 +67,15 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
             return;
         }
 
+        // Check for Pro feature usage by Free user
+        if (activeTool.id === 'hairstyle' && params.style) {
+            const selectedHairstyle = hairstyles.find(h => h.name === params.style);
+            if (selectedHairstyle?.isPro && user.plan.name === 'Free') {
+                setShowUpgradeModal(true);
+                return;
+            }
+        }
+
         if (user.credits < 1) {
             setShowNoCreditsModal(true);
             return;
@@ -80,6 +91,11 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
             if (activeTool.type === 'ANALYSIS') {
                 const result = await analyzeFace(imageToProcess);
                 setAnalysisResult(result);
+                 // FIX: Save analysis tool usage to generations history.
+                await supabase.from('generations').insert({
+                    user_id: user.id,
+                    tool_id: activeTool.id,
+                });
             } else {
                 const base64Image = await transformImage(imageToProcess, activeTool, params);
                 const byteString = atob(base64Image);
@@ -90,18 +106,27 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
                 }
                 const newImageBlob = new Blob([ab], { type: 'image/png' });
                 
+                // FIX: Upload generated image to storage and save record to generations table.
+                const filePath = `${user.id}/${activeTool.id}-${new Date().getTime()}.png`;
+                const { error: uploadError } = await supabase.storage.from('generations').upload(filePath, newImageBlob);
+                if (uploadError) throw new Error(`Storage Error: ${uploadError.message}`);
+
+                const { data: urlData } = supabase.storage.from('generations').getPublicUrl(filePath);
+                if (!urlData) throw new Error('Could not get public URL for the generated image.');
+
+                await supabase.from('generations').insert({
+                    user_id: user.id,
+                    tool_id: activeTool.id,
+                    image_url: urlData.publicUrl,
+                });
+
                 const newHistory = history.slice(0, historyIndex + 1);
                 newHistory.push(newImageBlob);
                 setHistory(newHistory);
                 setHistoryIndex(newHistory.length - 1);
             }
 
-            // Deduct credit
-            await supabase
-              .from('users')
-              .update({ credits: user.credits - 1 })
-              .eq('id', user.id);
-            
+            // Record credit usage. The actual deduction is now handled by a database trigger.
             await supabase.from('credit_usage').insert({
               user_id: user.id,
               tool_id: activeTool.id,
@@ -120,14 +145,24 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
     const handleUndo = () => canUndo && setHistoryIndex(historyIndex - 1);
     const handleRedo = () => canRedo && setHistoryIndex(historyIndex + 1);
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (!currentImageUrl) return;
-        const a = document.createElement('a');
-        a.href = currentImageUrl;
-        a.download = `sparky-edit-${new Date().getTime()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        setIsLoading(true);
+        setError(null);
+        try {
+            const watermarkedDataUrl = await addWatermark(currentImageUrl);
+            const a = document.createElement('a');
+            a.href = watermarkedDataUrl;
+            a.download = `sparky-edit-${new Date().getTime()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (e) {
+            console.error("Failed to add watermark and download", e);
+            setError(t('editor.error.download_failed'));
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleShare = async () => {
@@ -178,10 +213,9 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
                     canUndo={canUndo}
                     canRedo={canRedo}
                 />
-                <ToolSidebar 
-                    tools={[]}
+                {/* FIX: Replaced duplicated sidebar logic with the ToolSidebar component to resolve the 'Cannot find name ToolControls' error and improve code reuse. */}
+                <ToolSidebar
                     activeTool={activeTool}
-                    setActiveTool={() => {}}
                     params={params}
                     setParams={setParams}
                     onGenerate={handleGenerate}
@@ -200,6 +234,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
                     <p className="text-muted-foreground mb-6 text-center">{t('modal.no_credits.text')}</p>
                     <Button className="w-full" onClick={() => { setShowNoCreditsModal(false); onNavigate('subscription'); }}>
                         {t('modal.no_credits.button')}
+                    </Button>
+                </Modal>
+            )}
+             {showUpgradeModal && (
+                <Modal title={t('modal.pro_feature.title')} onClose={() => setShowUpgradeModal(false)}>
+                    <p className="text-muted-foreground mb-6 text-center">{t('modal.pro_feature.text')}</p>
+                    <Button className="w-full" onClick={() => { setShowUpgradeModal(false); onNavigate('subscription'); }}>
+                        {t('modal.pro_feature.button')}
                     </Button>
                 </Modal>
             )}

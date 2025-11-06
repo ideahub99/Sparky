@@ -70,10 +70,10 @@ const App: React.FC = () => {
             .from('users')
             .select('*, plans(*)')
             .eq('id', sessionUser.id)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            console.error('Error fetching user profile:', error);
+            console.error('Error fetching user profile:', error.message);
             return null;
         }
         if (!userProfileData) return null;
@@ -147,7 +147,7 @@ const App: React.FC = () => {
           notificationsRes,
           creditUsageRes
       ] = await Promise.all([
-          supabase.from('users').select('*, plans(*)').eq('id', userId).single(),
+          supabase.from('users').select('*, plans(*)').eq('id', userId).maybeSingle(),
           supabase.from('generations').select('id, tool_id, image_url, created_at, tools(name_key)').order('created_at', { ascending: false }).limit(20),
           supabase.from('notifications').select('*').order('created_at', { ascending: false }),
           supabase.from('credit_usage').select('id, tool_id, credits_used, created_at, tools(name_key)').order('created_at', { ascending: false }).limit(200)
@@ -171,7 +171,7 @@ const App: React.FC = () => {
       if (creditUsageRes.data) setCreditUsage(creditUsageRes.data.map((c: any) => ({...c, toolName: c.tools.name_key, credits: c.credits_used, date: c.created_at.split('T')[0] })) as CreditUsage[]);
       
       setDataLoading(false);
-  }, []);
+  }, [setUser, setGenerations, setNotifications, setCreditUsage]);
 
   // Data Fetching Effect
   useEffect(() => {
@@ -180,7 +180,8 @@ const App: React.FC = () => {
             setDataLoading(true);
             
             const mapToolIcons = (dbTools: any[]) => {
-                const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+                // FIX: Update icon map type to allow style prop, resolving type error in TrackingPage
+                const iconMap: { [key: string]: React.ComponentType<{ className?: string; style?: React.CSSProperties }> } = {
                     SparklesIcon, FaceSmileIcon, PaintBrushIcon, ClockIcon, UserSearchIcon, HappyFaceIcon, SadFaceIcon, WindIcon, BeardIcon, SkinIcon, PumpkinIcon, EyeIcon
                 };
                 return dbTools.map(t => ({...t, icon: iconMap[t.icon_name] || SparklesIcon, name: t.name_key, description: t.description_key }));
@@ -284,12 +285,14 @@ const App: React.FC = () => {
   };
 
   const renderPage = () => {
-    if (authLoading || (user && dataLoading)) {
+    // FIX: The page loader should not display on the editor page, as it causes the component to unmount and lose state.
+    const showPageLoader = (authLoading || (user && dataLoading)) && page !== 'editor';
+    if (showPageLoader) {
         return (
             <div className="flex h-full items-center justify-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-accent"></div>
             </div>
-        )
+        );
     }
 
     if (!user) {
@@ -355,7 +358,7 @@ const App: React.FC = () => {
     <LocaleContext.Provider value={{ locale, setLocale, t }}>
       <ThemeContext.Provider value={{ theme, setTheme, accentColor, setAccentColor }}>
         <div className="max-w-md mx-auto min-h-[100dvh] bg-background flex flex-col font-sans">
-        <div className="flex-grow pb-24"> 
+        <div className={`flex-grow ${showBottomNav ? 'pb-24' : ''}`}> 
             {isSupabaseConfigured ? renderPage() : <SupabaseConfigError />}
         </div>
         {isSupabaseConfigured && showBottomNav && <BottomNav activePage={page} setPage={(p: Page) => navigate(p, true)} />}

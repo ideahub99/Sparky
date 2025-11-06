@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       :root {
-        --background: 222.2 84% 4.9%;
+        --background: 221 39% 11%;
         --foreground: 210 40% 98%;
-        --card: 224 7.7% 16.1%;
+        --card: 222 47% 16%;
         --card-foreground: 210 40% 98%;
         --popover: 222.2 84% 4.9%;
         --popover-foreground: 210 40% 98%;
@@ -21,14 +21,14 @@
         --primary-foreground: 222.2 47.4% 11.2%;
         --secondary: 217.2 32.6% 17.5%;
         --secondary-foreground: 210 40% 98%;
-        --muted: 217.2 32.6% 17.5%;
+        --muted: 217.2 32.6% 23.5%;
         --muted-foreground: 215 20.2% 65.1%;
         --accent: 263 91% 65%;
         --accent-foreground: 210 40% 98%;
         --destructive: 0 62.8% 30.6%;
         --destructive-foreground: 210 40% 98%;
-        --border: 217.2 32.6% 25.5%;
-        --input: 217.2 32.6% 17.5%;
+        --border: 215 28% 27%;
+        --input: 222 47% 21%;
         --ring: 263 91% 65%;
       }
       .light {
@@ -76,12 +76,67 @@
       body[dir="rtl"] .rtl-flip {
         transform: scaleX(-1);
       }
-      @keyframes text-reveal {
-        from { transform: translateY(110%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+      @keyframes gradient-move {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
       }
-      .animate-text-reveal {
-        animation: text-reveal 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+      .animated-gradient-background {
+        background: radial-gradient(at 20% 25%, hsl(var(--accent) / 0.15) 0px, transparent 50%),
+                    radial-gradient(at 75% 30%, hsl(var(--primary) / 0.1) 0px, transparent 50%),
+                    radial-gradient(at 45% 75%, hsl(var(--accent) / 0.2) 0px, transparent 50%),
+                    radial-gradient(at 85% 95%, hsl(var(--primary) / 0.1) 0px, transparent 50%);
+        background-size: 300% 300%;
+        animation: gradient-move 25s ease infinite;
+      }
+      @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.7s cubic-bezier(0.3, 1, 0.4, 1) forwards;
+        opacity: 0;
+      }
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+      .blinking-cursor {
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes flame {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            filter: drop-shadow(0 0 5px hsl(var(--accent)));
+        }
+        50% {
+            transform: translateY(-5px) scale(1.05);
+            opacity: 0.8;
+            filter: drop-shadow(0 0 15px hsl(var(--accent)));
+        }
+      }
+      .animate-flame {
+        animation: flame 1.5s infinite ease-in-out;
+      }
+      @keyframes card-entry {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+      }
+      .animate-card-entry {
+        animation: card-entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
       }
     </style>
   <script type="importmap">
@@ -140,7 +195,7 @@
     }
   </script>
 </head>
-  <body class="bg-background text-foreground">
+  <body class="bg-background text-foreground scrollbar-hide">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

@@ -19,9 +19,15 @@ export const en = {
 
     // --- Welcome/Auth Pages ---
     "welcome.title": "Sparky",
-    "welcome.subtitle": "Transform your photos with AI. Explore dozens of tools from hairstyle changes to facial analysis.",
+    "welcome.phrase1": "Unleash your creativity.",
+    "welcome.phrase2": "Redefine your look.",
+    "welcome.phrase3": "Discover a new you.",
     "welcome.create_account": "Create an Account",
     "welcome.log_in": "Log In",
+    "welcome.feature1": "Experiment with AI Hairstyles",
+    "welcome.feature2": "In-depth Face Analysis",
+    "welcome.feature3": "Play with Age Filters",
+    "welcome.feature4": "Creative Photo Effects",
     
     "login.title": "Welcome Back!",
     "login.subtitle": "Log in to continue your creative journey.",
@@ -40,9 +46,13 @@ export const en = {
     "signup.login_link": "Log in",
     "signup.error_passwords_mismatch": "Passwords do not match.",
     "signup.error_user_exists": "A user with this email already exists but is unconfirmed. Please check your email for a confirmation link.",
-    "signup.check_email_title": "Check Your Email",
-    "signup.check_email_subtitle": "We've sent a confirmation link to your email address. Please click the link to activate your account.",
-    "signup.back_to_login": "Back to Login",
+    "signup.verify_code_title": "Enter Verification Code",
+    "signup.verify_code_subtitle": "We sent a 6-digit code to {email}. Please enter it below.",
+    "signup.verify_code_info": "The verification email may be from Supabase Auth, which is our official authentication provider.",
+    "signup.verify_button": "Verify Account",
+    "signup.error_invalid_code": "Please enter a valid 6-digit code.",
+    "signup.resend_code": "Didn't receive a code? Resend",
+    "signup.resend_success": "A new verification code has been sent.",
 
     // --- Main Pages ---
     "home.welcome_back": "Welcome Back!",
@@ -83,6 +93,7 @@ export const en = {
     "subscription.title": "Manage Subscription",
     "subscription.current_plan": "Current Plan",
     "subscription.plan_credits": "{count} monthly credits",
+    "subscription.per_month": "/month",
     "subscription.feature1": "Access to all tools",
     "subscription.feature2": "Standard generation speed",
     "subscription.feature3": "Priority support",
@@ -142,6 +153,7 @@ export const en = {
     "editor.error.no_image": "Please upload an image first.",
     "editor.error.generic": "An unknown error occurred. Please try again.",
     "editor.error.share_failed": "Could not share the image.",
+    "editor.error.download_failed": "Could not process image for download. Please try again.",
     
     "uploader.confirm_button": "Confirm Photo",
     "uploader.change_button": "Choose a different photo",
@@ -149,8 +161,10 @@ export const en = {
     "uploader.subtitle": "Choose a photo from your gallery or take a new one to get started.",
     "uploader.upload_gallery": "From Gallery",
     "uploader.take_photo": "Take Photo",
+    "uploader.generate_button": "Generate",
 
     // Tool Controls
+    "editor.controls_suffix": "Controls",
     "editor.hairstyle.female": "Female",
     "editor.hairstyle.male": "Male",
     "editor.hairstyle.category.all": "All",
@@ -198,6 +212,13 @@ export const en = {
     "modal.no_credits.title": "Out of Credits",
     "modal.no_credits.text": "You have used all your available credits. Please upgrade your plan to continue creating.",
     "modal.no_credits.button": "View Plans",
+    "modal.pro_feature.title": "Pro Feature Locked",
+    "modal.pro_feature.text": "This hairstyle is only available for Pro subscribers. Upgrade your plan to use this and many other exclusive features.",
+    "modal.pro_feature.button": "Upgrade to Pro",
+    "modal.logout.title": "Log Out?",
+    "modal.logout.text": "Are you sure you want to log out? You can always come back to explore more features.",
+    "modal.logout.confirm_button": "Log Out",
+    "modal.logout.cancel_button": "Stay & Explore",
 
     // --- Tool Names and Descriptions (used as keys) ---
     "tool.hairstyle.name": "Hairstyle Changer",
