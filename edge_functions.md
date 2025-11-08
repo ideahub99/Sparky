@@ -1,4 +1,4 @@
-# Sparky Edge Functions: Implementation Guide
+# Sparky Edge Functions: Implementation Guide (Updated)
 
 This document provides implementation details and code examples for the Supabase Edge Functions that power the Sparky application's backend logic. These server-side functions are crucial for security (protecting API keys) and performance.
 
@@ -23,17 +23,17 @@ This is the primary function for all generative image tools. It securely handles
 ### Logic Flow:
 1.  Handles CORS preflight requests.
 2.  Initializes a Supabase Admin client using the secure `SERVICE_ROLE_KEY`.
-3.  Authenticates the user via their JWT and validates the request.
-4.  Fetches the user's profile to check their credit balance and plan.
-5.  Calls the Gemini API to transform the image, receiving a high-quality PNG.
-6.  **Optimizes the image:**
-    -   The original PNG is kept for high-quality downloads.
-    -   An optimized, smaller JPEG is created for fast in-app display.
-7.  **Uploads to Storage:**
+3.  Authenticates the user and validates the request, which now contains a `storagePath` instead of raw image data.
+4.  **Downloads the user's image** from the temporary `image-processing-uploads` bucket.
+5.  Fetches the user's profile to check their credit balance and plan.
+6.  Calls the Gemini API to transform the image, receiving a high-quality PNG.
+7.  **Optimizes the image:** Creates an optimized JPEG for display and keeps the original PNG for HQ downloads.
+8.  **Uploads to Storage:**
     -   The original PNG is uploaded to the private `generations-hq` bucket.
     -   The optimized JPEG is uploaded to the public `generations` bucket.
-8.  Inserts records into the `credit_usage` and `generations` tables, storing paths to both image versions.
-9.  Returns the `generationId` and the base64 data of the *optimized JPEG* to the client for immediate display.
+9.  Inserts records into the `credit_usage` and `generations` tables.
+10. **Cleans up** by deleting the temporary image from `image-processing-uploads`.
+11. Returns the `generationId` and the base64 data of the *optimized JPEG* to the client.
 
 ### Deployable Code (`index.ts`):
 
@@ -41,7 +41,7 @@ This is the primary function for all generative image tools. It securely handles
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'npm:@supabase/supabase-js@^2.45.0'
 import { GoogleGenAI, Modality } from 'npm:@google/genai@^1.23.0'
-import Jimp from 'npm:jimp'
+import jimp from 'https://esm.sh/jimp@0.22.10';
 import { Buffer } from "https://deno.land/std@0.177.0/node/buffer.ts";
 
 const corsHeaders = {
@@ -83,16 +83,31 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let storagePathToDelete: string | null = null;
+
   try {
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const authHeader = req.headers.get('Authorization')!;
     const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
     if (!user) throw new Error('Unauthorized');
 
-    const { tool, params, imageBase64, imageMimeType } = await req.json();
-    if (!tool || !params || !imageBase64 || !imageMimeType) {
+    const { tool, params, storagePath } = await req.json();
+    if (!tool || !params || !storagePath) {
         throw new Error('Missing required parameters.');
     }
+    storagePathToDelete = storagePath;
+
+    // Download image from temporary storage
+    const { data: imageBlob, error: downloadError } = await supabaseAdmin.storage
+      .from('image-processing-uploads')
+      .download(storagePath);
+    
+    if (downloadError) throw downloadError;
+    if (!imageBlob) throw new Error('Failed to download image from storage.');
+
+    const imageBuffer = await imageBlob.arrayBuffer();
+    const imageBase64 = bufferToBase64(imageBuffer);
+    const imageMimeType = imageBlob.type;
 
     const { data: userProfile, error: profileError } = await supabaseAdmin.from('users').select('*, plans(name)').eq('id', user.id).single();
     if (profileError) throw profileError;
@@ -124,17 +139,15 @@ serve(async (req) => {
     const originalPngBase64 = imgPart.inlineData.data;
     const originalPngBytes = Uint8Array.from(atob(originalPngBase64), c => c.charCodeAt(0));
     
-    // Convert Uint8Array to a Buffer for Jimp
-    const imageBuffer = Buffer.from(originalPngBytes);
-    const image = await Jimp.read(imageBuffer);
+    // FIX: Robustly handle CJS/ESM interop for the Jimp library.
+    const Jimp = (jimp as any).default || jimp;
     
-    await image.quality(75); // Set JPEG quality to 75
-    
-    // Get the optimized JPEG as a buffer
+    const jimpImageBuffer = Buffer.from(originalPngBytes);
+    const image = await Jimp.read(jimpImageBuffer);
+    await image.quality(75);
     const optimizedJpegBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
     const optimizedJpegBytes = new Uint8Array(optimizedJpegBuffer);
     const optimizedJpegBase64 = bufferToBase64(optimizedJpegBytes.buffer);
-
 
     // --- Storage Operations ---
     const filenameBase = `${tool.id}-${Date.now()}`;
@@ -159,12 +172,20 @@ serve(async (req) => {
     if (genError) throw genError;
     if (!generationData) throw new Error('Failed to create generation record.');
 
-    // --- Success Response ---
+    // --- Cleanup and Response ---
+    await supabaseAdmin.storage.from('image-processing-uploads').remove([storagePath]);
+    storagePathToDelete = null;
+
     return new Response(JSON.stringify({ newImageBase64: optimizedJpegBase64, generationId: generationData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
+    // If an error occurred, try to clean up the temp file
+    if (storagePathToDelete) {
+        const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+        await supabaseAdmin.storage.from('image-processing-uploads').remove([storagePathToDelete]);
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
@@ -177,7 +198,7 @@ serve(async (req) => {
 
 ## 2. `analyze-face` Function
 
-Handles requests for the facial analysis tool. It's similar to `process-image` but works with JSON data and a different Gemini model.
+Handles requests for the facial analysis tool. It now also uses the direct-to-storage upload method to avoid payload size limits.
 
 **File:** `supabase/functions/analyze-face/index.ts`
 
@@ -207,10 +228,21 @@ const analysisSchema = {
     required: [ 'faceShape', 'symmetryScore', 'youthfulnessScore', 'skinClarity', 'overallAnalysis', 'eyeShape', 'jawlineDefinitionScore', 'cheekboneProminenceScore', 'lipFullnessScore', 'skinEvennessScore', 'goldenRatioScore', 'emotionalExpression', 'perceivedAge' ]
 };
 
+const bufferToBase64 = (buffer: ArrayBuffer) => {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+
+  let storagePathToDelete: string | null = null;
 
   try {
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -218,8 +250,21 @@ serve(async (req) => {
     const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
     if (!user) throw new Error('Unauthorized');
 
-    const { imageBase64, imageMimeType } = await req.json();
-    if (!imageBase64 || !imageMimeType) throw new Error('Missing image data.');
+    const { storagePath } = await req.json();
+    if (!storagePath) throw new Error('Missing storage path.');
+    storagePathToDelete = storagePath;
+
+    // Download image from temporary storage
+    const { data: imageBlob, error: downloadError } = await supabaseAdmin.storage
+      .from('image-processing-uploads')
+      .download(storagePath);
+
+    if (downloadError) throw downloadError;
+    if (!imageBlob) throw new Error('Failed to download image from storage.');
+
+    const imageBuffer = await imageBlob.arrayBuffer();
+    const imageBase64 = bufferToBase64(imageBuffer);
+    const imageMimeType = imageBlob.type;
 
     const { data: userProfile, error: profileError } = await supabaseAdmin.from('users').select('credits').eq('id', user.id).single();
     if (profileError) throw profileError;
@@ -227,7 +272,7 @@ serve(async (req) => {
 
     const ai = new GoogleGenAI({ apiKey: Deno.env.get('GEMINI_API_KEY')! });
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         contents: { parts: [
             { inlineData: { mimeType: imageMimeType, data: imageBase64 } },
             { text: 'Analyze the facial features in this image and provide a detailed report according to the provided JSON schema.' },
@@ -235,15 +280,26 @@ serve(async (req) => {
         config: { responseMimeType: "application/json", responseSchema: analysisSchema },
     });
 
-    const analysisResult = JSON.parse(response.text.trim());
+    let jsonText = response.text.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7, -3);
+    }
+    const analysisResult = JSON.parse(jsonText);
 
     await supabaseAdmin.from('credit_usage').insert({ user_id: user.id, tool_id: 'analysis', credits_used: 1 });
     await supabaseAdmin.from('generations').insert({ user_id: user.id, tool_id: 'analysis' });
+
+    await supabaseAdmin.storage.from('image-processing-uploads').remove([storagePath]);
+    storagePathToDelete = null;
 
     return new Response(JSON.stringify({ analysisResult }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
     });
   } catch (error) {
+     if (storagePathToDelete) {
+        const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+        await supabaseAdmin.storage.from('image-processing-uploads').remove([storagePathToDelete]);
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500,
     });

@@ -122,7 +122,16 @@ export const EditorPage: React.FC<EditorPageProps> = ({ activeTool, goBack, user
             onDataRefresh();
 
         } catch (e: any) {
-            setError(e.message || t('editor.error.generic'));
+            // Supabase FunctionsHttpError can contain the actual response JSON in `context`.
+            // We check for our specific "pro feature" error message from the backend.
+            const errorBody = e.context || {};
+            const errorMessage = errorBody.error || e.message || t('editor.error.generic');
+
+            if (typeof errorMessage === 'string' && errorMessage.includes('Pro feature')) {
+                setShowUpgradeModal(true);
+            } else {
+                setError(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
