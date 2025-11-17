@@ -77,8 +77,31 @@ export const SettingsPage: React.FC<{ onNavigate: (page: Page) => void; goBack: 
 
 export const SubscriptionPage: React.FC<{ goBack: () => void; onNavigate: (page: Page) => void; user: User | null; plans: Plan[] }> = ({ goBack, user, plans }) => {
     const { t } = useTranslation();
+    const [loading, setLoading] = useState<string | null>(null);
     const currentPlan = user?.plan;
     const sortedPlans = [...plans].sort((a, b) => a.id - b.id);
+
+    const handleUpgrade = async (plan: Plan) => {
+        if (!user || !plan.price_usd) return;
+        
+        setLoading(plan.id);
+        try {
+            const { createPaymentLink } = await import('../services/dodoPayService');
+            const paymentLink = await createPaymentLink(
+                plan.id, 
+                plan.price_usd, 
+                'USD'
+            );
+            
+            // Redirect to payment page
+            window.location.href = paymentLink.url;
+        } catch (error) {
+            console.error('Failed to create payment:', error);
+            alert(t('subscription.payment_error') || 'Failed to initiate payment');
+        } finally {
+            setLoading(null);
+        }
+    };
 
     return (
         <div className="p-4 h-full flex flex-col">
@@ -86,6 +109,7 @@ export const SubscriptionPage: React.FC<{ goBack: () => void; onNavigate: (page:
             <div className="space-y-4 flex-grow">
                 {sortedPlans.map(plan => {
                     const isCurrent = plan.id === currentPlan?.id;
+                    const isLoading = loading === plan.id;
                     return (
                         <div key={plan.id} className={`p-5 rounded-xl border-2 ${isCurrent ? 'border-accent bg-accent/10' : 'border-border bg-card'}`}>
                             {isCurrent && <p className="text-xs font-bold text-accent mb-1">{t('subscription.current_plan')}</p>}
@@ -95,14 +119,19 @@ export const SubscriptionPage: React.FC<{ goBack: () => void; onNavigate: (page:
                                     <p className="text-2xl font-bold">${plan.price_usd}<span className="text-sm font-normal text-muted-foreground">{t('subscription.per_month')}</span></p>
                                 )}
                             </div>
-                            {/* FIX: Convert number to string for translation function. */}
                             <p className="text-muted-foreground my-2">{t('subscription.plan_credits', { count: plan.monthly_credits.toString() })}</p>
                             <ul className="text-sm space-y-1 my-4">
                                 <li>✓ {t('subscription.feature1')}</li>
                                 <li>✓ {t('subscription.feature2')}</li>
                                 {plan.id > 1 && <li>✓ {t('subscription.feature3')}</li>}
                             </ul>
-                            <Button className="w-full" disabled={isCurrent}>{isCurrent ? t('subscription.subscribed_button') : t('subscription.upgrade_button')}</Button>
+                            <Button 
+                                className="w-full" 
+                                disabled={isCurrent || isLoading || !plan.price_usd}
+                                onClick={() => handleUpgrade(plan)}
+                            >
+                                {isLoading ? t('subscription.processing') || 'Processing...' : isCurrent ? t('subscription.subscribed_button') : t('subscription.upgrade_button')}
+                            </Button>
                         </div>
                     );
                 })}

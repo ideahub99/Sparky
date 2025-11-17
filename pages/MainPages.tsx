@@ -146,7 +146,17 @@ const groupGenerationsByDate = (generations: Generation[], t: (key: string, repl
 
 export const HistoryPage: React.FC<HistoryPageProps> = ({ generations }) => {
     const { t } = useTranslation();
+    const [selectedImage, setSelectedImage] = useState<Generation | null>(null);
     const groupedGenerations = groupGenerationsByDate(generations, t);
+
+    const handleDownload = async (gen: Generation) => {
+        if (gen.imageUrl) {
+            const link = document.createElement('a');
+            link.href = gen.imageUrl;
+            link.download = `sparky-${gen.toolName}-${gen.id}.jpg`;
+            link.click();
+        }
+    };
 
     return (
         <div>
@@ -164,15 +174,19 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ generations }) => {
                                 <h2 className="font-bold mb-3 px-2">{date}</h2>
                                 <div className="grid grid-cols-3 gap-2">
                                     {gens.map(gen => (
-                                        <div key={gen.id} className="relative aspect-square bg-muted rounded-lg">
+                                        <button 
+                                            key={gen.id} 
+                                            onClick={() => setSelectedImage(gen)}
+                                            className="relative aspect-square bg-muted rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                                        >
                                             {gen.imageUrl ? (
-                                                <img src={gen.imageUrl} alt={t(gen.toolName)} className="w-full h-full object-cover rounded-lg" />
+                                                <img src={gen.imageUrl} alt={t(gen.toolName)} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center p-1 text-center">
                                                     <span className="text-xs text-muted-foreground">{t(gen.toolName)}</span>
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -180,6 +194,41 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ generations }) => {
                     </div>
                 )}
             </div>
+
+            {/* Image Modal */}
+            {selectedImage && (
+                <Modal isOpen={true} onClose={() => setSelectedImage(null)}>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold">{t(selectedImage.toolName)}</h3>
+                            <button 
+                                onClick={() => setSelectedImage(null)}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        {selectedImage.imageUrl && (
+                            <img 
+                                src={selectedImage.imageUrl} 
+                                alt={t(selectedImage.toolName)} 
+                                className="w-full rounded-lg"
+                            />
+                        )}
+                        <div className="text-sm text-muted-foreground">
+                            {new Date(selectedImage.created_at).toLocaleString()}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={() => handleDownload(selectedImage)} 
+                                className="flex-1"
+                            >
+                                {t('history.download')}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 };

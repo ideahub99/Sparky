@@ -61,8 +61,21 @@ const App: React.FC = () => {
 
   const defaultLocale = 'en';
   const [locale, setLocale] = useState(defaultLocale);
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [accentColor, setAccentColor] = useState<AccentColor>(ACCENT_COLORS[0]);
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved as Theme) || 'dark';
+  });
+  const [accentColor, setAccentColor] = useState<AccentColor>(() => {
+    const saved = localStorage.getItem('accentColor');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return ACCENT_COLORS[0];
+      }
+    }
+    return ACCENT_COLORS[0];
+  });
 
   const fetchUserProfile = async (sessionUser: any): Promise<User | null> => {
         const { data: userProfileData, error } = await supabase
@@ -94,6 +107,24 @@ const App: React.FC = () => {
     if (!isSupabaseConfigured) {
         setAuthLoading(false);
         return;
+    }
+
+    // Handle payment callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const paymentId = urlParams.get('payment_id');
+    
+    if (paymentStatus === 'success' && paymentId) {
+      import('./services/dodoPayService').then(({ processSuccessfulPayment }) => {
+        processSuccessfulPayment(paymentId).then(() => {
+          window.history.replaceState({}, '', window.location.pathname);
+          if (user) refreshData(user.id);
+        }).catch(error => {
+          console.error('Payment processing failed:', error);
+        });
+      });
+    } else if (paymentStatus === 'cancelled') {
+      window.history.replaceState({}, '', window.location.pathname);
     }
 
     const handleAuthChange = async (session: any) => {
@@ -222,9 +253,11 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', accentColor.value);
     document.documentElement.style.setProperty('--ring', accentColor.value);
+    localStorage.setItem('accentColor', JSON.stringify(accentColor));
   }, [accentColor]);
 
   useEffect(() => {
+    localStorage.setItem('theme', theme);
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     let effectiveTheme = theme;

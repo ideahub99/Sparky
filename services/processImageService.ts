@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { GoogleGenAI, Modality } from '@google/genai';
+import { notifyGenerationComplete, notifyLowCredits } from './notificationService';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -168,6 +169,15 @@ export const processImageService = async (
     // Cleanup
     await supabase.storage.from('image-processing-uploads').remove([storagePath]);
     storagePathToDelete = null;
+
+    // Send notifications
+    await notifyGenerationComplete(user.id, tool.name);
+    
+    // Check if credits are low after this generation
+    const newCredits = userProfile.credits - 1;
+    if (newCredits <= 5) {
+      await notifyLowCredits(user.id, newCredits);
+    }
 
     return {
       newImageBase64: optimizedJpegBase64,
