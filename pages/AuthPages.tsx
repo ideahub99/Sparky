@@ -95,17 +95,41 @@ export const LoginScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ on
         }
 
         if (authData.user) {
-            const { error: profileError } = await supabase
+            // Check if user profile exists
+            const { data: profileData, error: profileError } = await supabase
                 .from('users')
                 .select('id')
                 .eq('id', authData.user.id)
-                .single(); 
+                .maybeSingle(); 
 
-            if (profileError) {
-                setError("Login failed: User profile not found. Please contact support.");
+            // If profile doesn't exist, create it
+            if (!profileData && !profileError) {
+                const username = authData.user.user_metadata?.username || authData.user.email?.split('@')[0] || 'User';
+                const { error: insertError } = await supabase
+                    .from('users')
+                    .insert({
+                        id: authData.user.id,
+                        username: username,
+                        plan_id: 1,
+                        credits: 10
+                    });
+
+                if (insertError) {
+                    console.error('Failed to create user profile:', insertError);
+                    setError("Failed to create user profile. Please contact support.");
+                    await supabase.auth.signOut();
+                    setLoading(false);
+                    return;
+                }
+            } else if (profileError) {
+                console.error('Error checking user profile:', profileError);
+                setError("Error verifying account. Please try again.");
                 await supabase.auth.signOut();
                 setLoading(false);
+                return;
             }
+            // Profile exists or was just created, login successful
+            setLoading(false);
         } else {
             setError("An unexpected error occurred. Please try again.");
             setLoading(false);
@@ -155,7 +179,7 @@ export const LoginScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ on
     );
 };
 
-const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
+const VerificationCodeScreen: React.FC<{ email: string; onNavigate: (page: Page) => void; }> = ({ email, onNavigate }) => {
     const { t } = useTranslation();
     const [code, setCode] = useState(new Array(6).fill(""));
     const [loading, setLoading] = useState(false);
@@ -216,7 +240,7 @@ const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
         setError(null);
         setMessage(null);
         
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
             email,
             token,
             type: 'signup',
@@ -224,8 +248,50 @@ const VerificationCodeScreen: React.FC<{ email: string; }> = ({ email }) => {
 
         if (error) {
             setError(error.message);
+            setLoading(false);
+            return;
         }
+
+        // If the server returned a session, set it locally so the client is authenticated
+        if (data && (data as any).session) {
+            try {
+                // `setSession` accepts the session object returned by GoTrue
+                await supabase.auth.setSession((data as any).session);
+                
+                // Ensure user profile exists (in case trigger didn't fire)
+                const userId = (data as any).session.user.id;
+                const { data: profileData } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('id', userId)
+                    .maybeSingle();
+                
+                if (!profileData) {
+                    // Profile doesn't exist, create it
+                    const username = (data as any).session.user.user_metadata?.username || 
+                                    (data as any).session.user.email?.split('@')[0] || 
+                                    'User';
+                    await supabase
+                        .from('users')
+                        .insert({
+                            id: userId,
+                            username: username,
+                            plan_id: 1,
+                            credits: 10
+                        });
+                }
+            } catch (e: any) {
+                // Non-fatal: still continue to navigate, but surface message
+                console.warn('Failed to set session from verifyOtp:', e?.message ?? e);
+            }
+        }
+
+        // Success: show a brief message then navigate to home so user can explore the app
+        setMessage(t('signup.verify_success') ?? 'Verified — redirecting...');
         setLoading(false);
+        setTimeout(() => {
+            onNavigate('home');
+        }, 800);
     };
     
     const handleResend = async () => {
@@ -329,7 +395,7 @@ export const SignUpScreen: React.FC<{ onNavigate: (page: Page) => void }> = ({ o
     };
 
     if (showVerificationScreen) {
-        return <VerificationCodeScreen email={submittedEmail} />;
+        return <VerificationCodeScreen email={submittedEmail} onNavigate={onNavigate} />;
     }
 
     return (
@@ -410,7 +476,7 @@ const PasswordResetVerificationScreen: React.FC<{ email: string; onNavigate: (pa
         setLoading(true);
         setError(null);
         
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
             email,
             token,
             type: 'recovery',
@@ -418,9 +484,20 @@ const PasswordResetVerificationScreen: React.FC<{ email: string; onNavigate: (pa
 
         if (error) {
             setError(error.message);
-        } else {
-            onNavigate('update-password');
+            setLoading(false);
+            return;
         }
+
+        // If a session was returned, set it locally
+        if (data && (data as any).session) {
+            try {
+                await supabase.auth.setSession((data as any).session);
+            } catch (e: any) {
+                console.warn('Failed to set session from verifyOtp (recovery):', e?.message ?? e);
+            }
+        }
+
+        onNavigate('update-password');
         setLoading(false);
     };
 
