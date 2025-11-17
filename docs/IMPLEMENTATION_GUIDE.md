@@ -15,10 +15,12 @@ This document covers all the implementations made to enhance the Sparky applicat
 
 #### Step 1: Get DodoPay API Key
 1. Visit [dodopayments.com](https://dodopayments.com)
-2. Create an account and get your API key
-3. Add to your `.env` file:
+2. Sign up and complete onboarding verification
+3. Navigate to Dashboard → Settings → API Keys
+4. Copy your **Secret API Key**
+5. Add to your `.env` file:
 ```env
-VITE_DODOPAY_API_KEY=your_api_key_here
+VITE_DODOPAY_API_KEY=dodo_sk_your_secret_key_here
 ```
 
 #### Step 2: Run Database Migration
@@ -33,31 +35,74 @@ This creates the `payment_history` table to track all payment transactions.
 
 The payment flow works as follows:
 1. User clicks "Upgrade" button on Subscription page
-2. `createPaymentLink()` is called to generate DodoPay checkout URL
-3. User is redirected to DodoPay payment page
+2. `createCheckoutSession()` creates a DodoPay checkout session
+3. User is redirected to DodoPay hosted payment page
 4. After payment:
-   - Success: User returns to `/?payment=success&payment_id=xxx`
+   - Success: User returns to `/?payment=success&session_id={CHECKOUT_SESSION_ID}`
    - Cancel: User returns to `/?payment=cancelled`
-5. App processes payment and updates user plan
+5. App verifies payment with DodoPay API and updates user plan
+
+### API Implementation
+
+**Endpoint Used**: `POST https://api.dodopayments.com/checkouts`
+
+**Request Body**:
+```json
+{
+  "customer": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "payment": {
+    "amount": 999,  // Amount in cents
+    "currency": "USD"
+  },
+  "success_url": "https://yourapp.com/?payment=success&session_id={CHECKOUT_SESSION_ID}",
+  "cancel_url": "https://yourapp.com/?payment=cancelled",
+  "metadata": {
+    "plan_id": "pro",
+    "user_id": "uuid",
+    "plan_name": "Pro Plan"
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "payment_link": "https://pay.dodopayments.com/...",
+  "checkout_session_id": "cs_..."
+}
+```
 
 ### Files Created/Modified
 
 **New Files:**
-- `services/dodoPayService.ts` - Payment service with all DodoPay integration
+- `services/dodoPayService.ts` - DodoPay API integration using official endpoints
 - `supabase/migrations/payment_history.sql` - Database schema for payments
 
 **Modified Files:**
-- `pages/SettingsPages.tsx` - Added payment button functionality
-- `App.tsx` - Added payment callback handling
+- `pages/SettingsPages.tsx` - Added payment button with checkout session creation
+- `App.tsx` - Added payment callback handling with session verification
 
-### Usage Example
+### Functions Available
 
 ```typescript
-import { createPaymentLink } from './services/dodoPayService';
+// Create checkout session
+const session = await createCheckoutSession(planId, planName, amount, 'USD');
+window.location.href = session.payment_link;
 
-// Create payment for Pro plan ($9.99)
-const paymentLink = await createPaymentLink('pro', 9.99, 'USD');
-window.location.href = paymentLink.url; // Redirect to payment
+// Get checkout session status
+const session = await getCheckoutSession(sessionId);
+
+// Process successful payment (called automatically on return)
+await processSuccessfulPayment(sessionId);
+
+// Get payment history
+const history = await getPaymentHistory();
+
+// Handle webhook (for server-side webhook endpoint)
+await handleWebhook(webhookEvent);
 ```
 
 ---
@@ -212,14 +257,45 @@ CREATE TABLE payment_history (
 ## API Integration Notes
 
 ### DodoPay API Endpoints Used
-- `POST /v1/payment-links` - Create checkout session
-- `GET /v1/payments/{id}` - Check payment status
+- `POST /checkouts` - Create checkout session
+- `GET /checkouts/{id}` - Get checkout session status
 
-### Webhook Setup (Optional)
-For production, set up DodoPay webhooks to:
-1. Receive instant payment confirmations
-2. Handle edge cases where user doesn't return to app
-3. Endpoint: `https://your-domain.com/api/webhooks/dodopay`
+### Authentication
+DodoPay uses Bearer token authentication:
+```
+Authorization: Bearer dodo_sk_your_secret_key
+```
+
+### Webhook Setup (Recommended for Production)
+For production, set up DodoPay webhooks to handle async payment updates:
+
+1. **Create webhook endpoint** in your backend
+2. **Configure webhook URL** in DodoPay Dashboard
+3. **Handle webhook events**:
+   - `payment.succeeded` - Payment completed successfully
+   - `payment.failed` - Payment failed
+   - `payment.canceled` - Payment was canceled
+
+**Webhook handler** (already implemented in dodoPayService):
+```typescript
+import { handleWebhook } from './services/dodoPayService';
+
+// In your webhook endpoint
+app.post('/api/webhooks/dodopay', async (req, res) => {
+  try {
+    await handleWebhook(req.body);
+    res.status(200).send('OK');
+  } catch (error) {
+    res.status(400).send('Error');
+  }
+});
+```
+
+### Important Notes
+1. **Amount formatting**: DodoPay expects amounts in cents (multiply by 100)
+2. **Currency codes**: Use ISO 4217 codes (USD, EUR, GBP, etc.)
+3. **Session IDs**: Use the `{CHECKOUT_SESSION_ID}` placeholder in success_url
+4. **Test mode**: DodoPay provides test API keys for development
 
 ---
 

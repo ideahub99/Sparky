@@ -1,57 +1,62 @@
 import { supabase } from '../lib/supabaseClient';
 
 const DODOPAY_API_KEY = import.meta.env.VITE_DODOPAY_API_KEY;
-const DODOPAY_API_URL = 'https://api.dodopayments.com/v1';
+const DODOPAY_BASE_URL = 'https://api.dodopayments.com';
 
-export interface DodoPaymentLink {
-  id: string;
-  url: string;
-  amount: number;
-  currency: string;
+export interface DodoCheckoutSession {
+  payment_link: string;
+  checkout_session_id: string;
 }
 
 export interface DodoPaymentStatus {
-  id: string;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  payment_id: string;
+  status: 'requires_payment_method' | 'requires_confirmation' | 'processing' | 'succeeded' | 'canceled';
   amount: number;
   currency: string;
-  created_at: string;
 }
 
 /**
- * Create a payment link for plan subscription
+ * Create a checkout session for plan subscription
+ * Based on DodoPay API: POST /checkouts
  */
-export const createPaymentLink = async (
+export const createCheckoutSession = async (
   planId: string,
+  planName: string,
   amount: number,
   currency: string = 'USD'
-): Promise<DodoPaymentLink> => {
+): Promise<DodoCheckoutSession> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
   try {
-    const response = await fetch(`${DODOPAY_API_URL}/payment-links`, {
+    const response = await fetch(`${DODOPAY_BASE_URL}/checkouts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${DODOPAY_API_KEY}`,
       },
       body: JSON.stringify({
-        amount,
-        currency,
-        customer_id: user.id,
+        customer: {
+          email: user.email,
+          name: user.user_metadata?.username || user.email,
+        },
+        payment: {
+          amount: Math.round(amount * 100), // Convert to cents
+          currency: currency.toUpperCase(),
+        },
+        success_url: `${window.location.origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${window.location.origin}/?payment=cancelled`,
         metadata: {
           plan_id: planId,
           user_id: user.id,
+          plan_name: planName,
         },
-        success_url: `${window.location.origin}/?payment=success`,
-        cancel_url: `${window.location.origin}/?payment=cancelled`,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to create payment link');
+      throw new Error(error.message || 'Failed to create checkout session');
     }
 
     const data = await response.json();
@@ -62,28 +67,27 @@ export const createPaymentLink = async (
       plan_id: planId,
       amount,
       currency,
-      payment_id: data.id,
+      payment_id: data.checkout_session_id,
       status: 'pending',
     });
 
     return {
-      id: data.id,
-      url: data.url,
-      amount,
-      currency,
+      payment_link: data.payment_link,
+      checkout_session_id: data.checkout_session_id,
     };
   } catch (error) {
-    console.error('DodoPay payment link creation failed:', error);
+    console.error('DodoPay checkout session creation failed:', error);
     throw error;
   }
 };
 
 /**
- * Check payment status
+ * Get checkout session status
+ * Based on DodoPay API: GET /checkouts/{id}
  */
-export const checkPaymentStatus = async (paymentId: string): Promise<DodoPaymentStatus> => {
+export const getCheckoutSession = async (sessionId: string): Promise<any> => {
   try {
-    const response = await fetch(`${DODOPAY_API_URL}/payments/${paymentId}`, {
+    const response = await fetch(`${DODOPAY_BASE_URL}/checkouts/${sessionId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${DODOPAY_API_KEY}`,
@@ -91,19 +95,12 @@ export const checkPaymentStatus = async (paymentId: string): Promise<DodoPayment
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch payment status');
+      throw new Error('Failed to fetch checkout session');
     }
 
-    const data = await response.json();
-    return {
-      id: data.id,
-      status: data.status,
-      amount: data.amount,
-      currency: data.currency,
-      created_at: data.created_at,
-    };
+    return await response.json();
   } catch (error) {
-    console.error('Failed to check payment status:', error);
+    console.error('Failed to get checkout session:', error);
     throw error;
   }
 };
@@ -111,7 +108,7 @@ export const checkPaymentStatus = async (paymentId: string): Promise<DodoPayment
 /**
  * Process successful payment and upgrade user plan
  */
-export const processSuccessfulPayment = async (paymentId: string): Promise<void> => {
+export const processSuccessfulPayment = async (sessionId: string): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
@@ -120,7 +117,7 @@ export const processSuccessfulPayment = async (paymentId: string): Promise<void>
     const { data: payment, error: paymentError } = await supabase
       .from('payment_history')
       .select('*, plans(*)')
-      .eq('payment_id', paymentId)
+      .eq('payment_id', sessionId)
       .eq('user_id', user.id)
       .single();
 
@@ -133,18 +130,28 @@ export const processSuccessfulPayment = async (paymentId: string): Promise<void>
     }
 
     // Verify payment with DodoPay
-    const status = await checkPaymentStatus(paymentId);
+    const session = await getCheckoutSession(sessionId);
     
-    if (status.status !== 'completed') {
+    if (session.status !== 'payment_received' && session.status !== 'completed') {
       throw new Error('Payment not completed');
     }
 
-    // Update user's plan
+    // Get current user credits
+    const { data: userData } = await supabase
+      .from('users')
+      .select('credits')
+      .eq('id', user.id)
+      .single();
+
+    const currentCredits = userData?.credits || 0;
+    const newCredits = currentCredits + payment.plans.credits;
+
+    // Update user's plan and credits
     const { error: updateError } = await supabase
       .from('users')
       .update({
         plan_id: payment.plan_id,
-        credits: supabase.raw(`credits + ${payment.plans.credits}`),
+        credits: newCredits,
       })
       .eq('id', user.id);
 
@@ -154,13 +161,13 @@ export const processSuccessfulPayment = async (paymentId: string): Promise<void>
     await supabase
       .from('payment_history')
       .update({ status: 'completed' })
-      .eq('payment_id', paymentId);
+      .eq('payment_id', sessionId);
 
     // Create notification
     await supabase.from('notifications').insert({
       user_id: user.id,
       title: 'Payment Successful',
-      message: `Your ${payment.plans.name} plan has been activated!`,
+      message: `Your ${payment.plans.name} plan has been activated! ${payment.plans.credits} credits added to your account.`,
       type: 'success',
     });
   } catch (error) {
@@ -185,3 +192,40 @@ export const getPaymentHistory = async (): Promise<any[]> => {
   if (error) throw error;
   return data || [];
 };
+
+/**
+ * Handle DodoPay webhook events
+ * Call this from a webhook endpoint
+ */
+export const handleWebhook = async (event: any): Promise<void> => {
+  try {
+    const { type, data } = event;
+
+    switch (type) {
+      case 'payment.succeeded':
+        await processSuccessfulPayment(data.checkout_session_id);
+        break;
+      
+      case 'payment.failed':
+        await supabase
+          .from('payment_history')
+          .update({ status: 'failed' })
+          .eq('payment_id', data.checkout_session_id);
+        break;
+      
+      case 'payment.canceled':
+        await supabase
+          .from('payment_history')
+          .update({ status: 'cancelled' })
+          .eq('payment_id', data.checkout_session_id);
+        break;
+      
+      default:
+        console.log('Unhandled webhook event:', type);
+    }
+  } catch (error) {
+    console.error('Webhook processing failed:', error);
+    throw error;
+  }
+};
+

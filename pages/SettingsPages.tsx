@@ -86,15 +86,16 @@ export const SubscriptionPage: React.FC<{ goBack: () => void; onNavigate: (page:
         
         setLoading(plan.id);
         try {
-            const { createPaymentLink } = await import('../services/dodoPayService');
-            const paymentLink = await createPaymentLink(
-                plan.id, 
-                plan.price_usd, 
+            const { createCheckoutSession } = await import('../services/dodoPayService');
+            const session = await createCheckoutSession(
+                plan.id,
+                plan.name,
+                plan.price_usd,
                 'USD'
             );
             
             // Redirect to payment page
-            window.location.href = paymentLink.url;
+            window.location.href = session.payment_link;
         } catch (error) {
             console.error('Failed to create payment:', error);
             alert(t('subscription.payment_error') || 'Failed to initiate payment');

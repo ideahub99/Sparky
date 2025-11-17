@@ -112,11 +112,11 @@ const App: React.FC = () => {
     // Handle payment callback
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
-    const paymentId = urlParams.get('payment_id');
+    const sessionId = urlParams.get('session_id');
     
-    if (paymentStatus === 'success' && paymentId) {
+    if (paymentStatus === 'success' && sessionId) {
       import('./services/dodoPayService').then(({ processSuccessfulPayment }) => {
-        processSuccessfulPayment(paymentId).then(() => {
+        processSuccessfulPayment(sessionId).then(() => {
           window.history.replaceState({}, '', window.location.pathname);
           if (user) refreshData(user.id);
         }).catch(error => {

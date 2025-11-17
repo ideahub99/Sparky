@@ -39,8 +39,14 @@
 ### Step 1: Update .env
 ```bash
 # Add this line to your .env file
-VITE_DODOPAY_API_KEY=your_dodopay_api_key_here
+# Get your API key from: https://dashboard.dodopayments.com/settings/api-keys
+VITE_DODOPAY_API_KEY=dodo_sk_your_secret_key_here
 ```
+
+**Important**: 
+- Use your **Secret Key** (starts with `dodo_sk_`)
+- NOT your Public Key (starts with `dodo_pk_`)
+- Keep this key secure and never commit to git
 
 ### Step 2: Run Database Migration
 ```bash
@@ -75,9 +81,17 @@ supabase/migrations/
 ## 🎨 Features Overview
 
 ### Payment Flow
-1. User clicks "Upgrade" → Creates DodoPay link → Redirects to checkout
-2. User completes payment → Returns to app with success
-3. App processes payment → Updates plan → Adds credits → Sends notification
+1. User clicks "Upgrade" → Creates DodoPay checkout session → Redirects to hosted payment page
+2. User enters payment details on DodoPay's secure page
+3. Payment completed → Returns to app with success status
+4. App verifies with DodoPay API → Updates plan → Adds credits → Sends notification
+
+**DodoPay Features Used**:
+- Hosted checkout page (PCI compliant)
+- Multiple payment methods support
+- Automatic currency conversion
+- Real-time payment verification
+- Webhook support for async updates
 
 ### History Features
 - 3-column grid of generated images
